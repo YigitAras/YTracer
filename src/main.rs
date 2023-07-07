@@ -3,8 +3,8 @@ use std::{fs::OpenOptions, io::BufWriter, io::Write};
 fn main() {
     println!("Program started...\n");
     // Image related
-    const IMAGE_WIDTH: u32 = 256;
-    const IMAGE_HEIGHT: u32 = 256;
+    const IMAGE_WIDTH: u32 = 1028;
+    const IMAGE_HEIGHT: u32 = 1028;
 
     // File
     let file = OpenOptions::new()
@@ -23,6 +23,10 @@ fn main() {
 
     // Render
     for j in (0..IMAGE_HEIGHT).rev() {
+        println!("\rScanlines remaining: {j}");
+        std::io::stdout()
+            .flush()
+            .expect("Flushing the stdout failed...\n");
         for i in 0..IMAGE_WIDTH {
             let r: f64 = (i as f64) / ((IMAGE_WIDTH - 1) as f64);
             let g: f64 = (j as f64) / ((IMAGE_HEIGHT - 1) as f64);
