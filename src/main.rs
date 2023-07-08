@@ -1,12 +1,16 @@
 use std::{fs::OpenOptions, io::BufWriter, io::Write};
+use kdam::tqdm;
+
 
 fn main() {
+    
     println!("Program started...\n");
     // Image related
-    const IMAGE_WIDTH: u32 = 1028;
-    const IMAGE_HEIGHT: u32 = 1028;
+    const IMAGE_WIDTH: u32 = 256;
+    const IMAGE_HEIGHT: u32 = 256;
 
     // File
+    std::fs::create_dir_all("./outputs").expect("Problem with creation of the outputs/ folder...\n");
     let file = OpenOptions::new()
         .write(true)
         .create(true)
@@ -22,11 +26,8 @@ fn main() {
         .expect("Unable to write the header!");
 
     // Render
-    for j in (0..IMAGE_HEIGHT).rev() {
-        println!("\rScanlines remaining: {j}");
-        std::io::stdout()
-            .flush()
-            .expect("Flushing the stdout failed...\n");
+    for j in tqdm!((0..IMAGE_HEIGHT).rev(), animation = "fillup") {
+        
         for i in 0..IMAGE_WIDTH {
             let r: f64 = (i as f64) / ((IMAGE_WIDTH - 1) as f64);
             let g: f64 = (j as f64) / ((IMAGE_HEIGHT - 1) as f64);
