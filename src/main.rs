@@ -6,12 +6,14 @@ mod hittable;
 mod hittable_list;
 mod ray;
 mod vector3;
+mod sphere;
 
 use crate::color::*;
 use crate::hittable::*;
 use crate::hittable_list::*;
 use crate::ray::*;
 use crate::vector3::*;
+use crate::sphere::*;
 
 fn hit_sphere(center: Vec3, radius: f64, r: Ray) -> f64 {
     let oc: Vec3 = r.orig - center;
@@ -27,15 +29,15 @@ fn hit_sphere(center: Vec3, radius: f64, r: Ray) -> f64 {
     }
 }
 
-fn ray_color(r: Ray) -> Vec3 {
-    let mut t = hit_sphere(Vec3::new(0.0, 0.0, -1.0), 0.5, r);
-    if t > 0.0 {
-        let n = Vec3::unit_vector(r.at(t) - Vec3::new(0.0, 0.0, -1.0));
-        return Vec3::new(n.x + 1.0, n.y + 1.0, n.z + 1.0) * 0.5;
+fn ray_color(r: Ray, world: &dyn Hittable ) -> Vec3 {
+    let mut rec: HitRecord = Default::default();
+
+    if world.hit(r, 0.0, f64::MAX, &mut rec){
+        return (rec.normal + Vec3::new(1.0,1.0,1.0)) * 0.5;
     }
 
     let unit_direction = Vec3::unit_vector(r.dir);
-    t = 0.5 * (unit_direction.y + 1.0);
+    let t = 0.5 * (unit_direction.y + 1.0);
     Vec3::new(1.0, 1.0, 1.0) * (1.0 - t) + Vec3::new(0.5, 0.7, 1.0) * t
 }
 
@@ -66,6 +68,11 @@ fn main() {
     const ASPECT_RATIO: f64 = 16.0 / 9.0;
     const IMAGE_WIDTH: u64 = 1080;
     const IMAGE_HEIGHT: u64 = (IMAGE_WIDTH as f64 / ASPECT_RATIO) as u64;
+
+    // World
+    let mut world: HittableList = Default::default();
+    world.add(Box::new(Sphere::new(Vec3::new(0.0,0.0,-1.0), 0.5)));
+    world.add(Box::new(Sphere::new(Vec3::new(0.0,-100.5,-1.0), 100.0)));
 
     // Camera
     const VIEWPORT_HEIGHT: f64 = 2.0;
@@ -104,7 +111,7 @@ fn main() {
                 origin,
                 lower_left_corner + horizontal * u + vertical * v - origin,
             );
-            let pixel_color = ray_color(r);
+            let pixel_color = ray_color(r, &world);
             write_color(&mut file, pixel_color);
         }
     }
