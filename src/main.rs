@@ -2,22 +2,23 @@ use kdam::tqdm;
 use std::{fs::OpenOptions, io::BufWriter, io::Write};
 
 mod color;
+mod hittable;
+mod hittable_list;
 mod ray;
 mod vector3;
-mod hittable;
 
 use crate::color::*;
+use crate::hittable::*;
+use crate::hittable_list::*;
 use crate::ray::*;
 use crate::vector3::*;
-use crate::hittable::*;
-
 
 fn hit_sphere(center: Vec3, radius: f64, r: Ray) -> f64 {
     let oc: Vec3 = r.orig - center;
     let a = r.dir.lenght_squared();
     let half_b = oc.dot(r.dir);
-    let c = oc.lenght_squared() - radius*radius;
-    let discriminant = half_b*half_b - a*c;
+    let c = oc.lenght_squared() - radius * radius;
+    let discriminant = half_b * half_b - a * c;
 
     if discriminant < 0.0 {
         -1.0
@@ -38,19 +39,22 @@ fn ray_color(r: Ray) -> Vec3 {
     Vec3::new(1.0, 1.0, 1.0) * (1.0 - t) + Vec3::new(0.5, 0.7, 1.0) * t
 }
 
-fn update_record(rec: &mut HitRecord){
+fn update_record(rec: &mut HitRecord) {
     rec.p = Vec3::new(10.0, 10.0, 10.0);
     rec.normal = Vec3::new(10.0, 10.0, 10.0);
     rec.t = -10.0;
     rec.front_face = false;
 }
 
-fn main(){
+fn main() {
     println!("Program started...\n");
 
     println!("Running test on mutable reference...");
     let mut record = HitRecord::new(
-        Vec3::new(0.0, 1.0, 1.0), Vec3::new(1.0, 1.0, 1.0), 1.0, true
+        Vec3::new(0.0, 1.0, 1.0),
+        Vec3::new(1.0, 1.0, 1.0),
+        1.0,
+        true,
     );
     println!("Before function: ");
     println!("{:?}", record);
