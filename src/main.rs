@@ -1,5 +1,9 @@
 use kdam::tqdm;
+use rand::Rng;
+use rand::rngs::ThreadRng;
 use std::{fs::OpenOptions, io::BufWriter, io::Write};
+
+
 
 mod color;
 mod hittable;
@@ -7,6 +11,8 @@ mod hittable_list;
 mod ray;
 mod vector3;
 mod sphere;
+mod utils;
+mod camera;
 
 use crate::color::*;
 use crate::hittable::*;
@@ -14,26 +20,19 @@ use crate::hittable_list::*;
 use crate::ray::*;
 use crate::vector3::*;
 use crate::sphere::*;
+use crate::utils::*;
+use crate::camera::*;
 
-fn hit_sphere(center: Vec3, radius: f64, r: Ray) -> f64 {
-    let oc: Vec3 = r.orig - center;
-    let a = r.dir.lenght_squared();
-    let half_b = oc.dot(r.dir);
-    let c = oc.lenght_squared() - radius * radius;
-    let discriminant = half_b * half_b - a * c;
-
-    if discriminant < 0.0 {
-        -1.0
-    } else {
-        (-half_b - discriminant.sqrt()) / a
-    }
-}
-
-fn ray_color(r: Ray, world: &dyn Hittable ) -> Vec3 {
+fn ray_color(r: Ray, world: &dyn Hittable , rng: &mut ThreadRng, depth: u64) -> Vec3 {
     let mut rec: HitRecord = Default::default();
 
-    if world.hit(r, 0.0, f64::MAX, &mut rec){
-        return (rec.normal + Vec3::new(1.0,1.0,1.0)) * 0.5;
+    if depth <= 0 {
+        return Vec3::new(0.0, 0.0, 0.0);
+    }
+
+    if world.hit(r, 0.00001, f64::MAX, &mut rec){
+        let target = rec.p + rec.normal + random_unit_vector(rng);
+        return ray_color(Ray::new(rec.p, target-rec.p), world, rng, depth) * 0.5;
     }
 
     let unit_direction = Vec3::unit_vector(r.dir);
@@ -41,49 +40,25 @@ fn ray_color(r: Ray, world: &dyn Hittable ) -> Vec3 {
     Vec3::new(1.0, 1.0, 1.0) * (1.0 - t) + Vec3::new(0.5, 0.7, 1.0) * t
 }
 
-fn update_record(rec: &mut HitRecord) {
-    rec.p = Vec3::new(10.0, 10.0, 10.0);
-    rec.normal = Vec3::new(10.0, 10.0, 10.0);
-    rec.t = -10.0;
-    rec.front_face = false;
-}
 
 fn main() {
     println!("Program started...\n");
-
-    println!("Running test on mutable reference...");
-    let mut record = HitRecord::new(
-        Vec3::new(0.0, 1.0, 1.0),
-        Vec3::new(1.0, 1.0, 1.0),
-        1.0,
-        true,
-    );
-    println!("Before function: ");
-    println!("{:?}", record);
-    println!("After function: ");
-    update_record(&mut record);
-    println!("{:?}", record);
+    let mut rng = rand::thread_rng();
+    
 
     // Image related
     const ASPECT_RATIO: f64 = 16.0 / 9.0;
     const IMAGE_WIDTH: u64 = 1080;
     const IMAGE_HEIGHT: u64 = (IMAGE_WIDTH as f64 / ASPECT_RATIO) as u64;
-
+    const SAMPLES_PER_PIXEL: u64 = 200;
+    const DEPTH: u64 = 50;
     // World
     let mut world: HittableList = Default::default();
     world.add(Box::new(Sphere::new(Vec3::new(0.0,0.0,-1.0), 0.5)));
     world.add(Box::new(Sphere::new(Vec3::new(0.0,-100.5,-1.0), 100.0)));
 
     // Camera
-    const VIEWPORT_HEIGHT: f64 = 2.0;
-    const VIEWPORT_WIDTH: f64 = ASPECT_RATIO * VIEWPORT_HEIGHT;
-    const FOCAL_LENGHT: f64 = 1.0;
-
-    let origin = Vec3::new(0.0, 0.0, 0.0);
-    let horizontal = Vec3::new(VIEWPORT_WIDTH, 0.0, 0.0);
-    let vertical = Vec3::new(0.0, VIEWPORT_HEIGHT, 0.0);
-    let lower_left_corner =
-        origin - horizontal / 2.0 - vertical / 2.0 - Vec3::new(0.0, 0.0, FOCAL_LENGHT);
+    let cam = Camera::new();
 
     // File
     std::fs::create_dir_all("./outputs")
@@ -105,14 +80,17 @@ fn main() {
     // Render
     for j in tqdm!((0..IMAGE_HEIGHT).rev(), animation = "fillup") {
         for i in 0..IMAGE_WIDTH {
-            let u = (i as f64) / ((IMAGE_WIDTH - 1) as f64);
-            let v = (j as f64) / ((IMAGE_HEIGHT - 1) as f64);
-            let r = Ray::new(
-                origin,
-                lower_left_corner + horizontal * u + vertical * v - origin,
-            );
-            let pixel_color = ray_color(r, &world);
-            write_color(&mut file, pixel_color);
+            let mut pixel_color = Vec3::new(0.0,0.0,0.0);
+
+            for _ in 0..SAMPLES_PER_PIXEL{
+                let u = (i as f64 + rng.gen_range(0.0..1.0)) / ((IMAGE_WIDTH-1) as f64);
+                let v = (j as f64 + rng.gen_range(0.0..1.0)) / ((IMAGE_HEIGHT-1) as f64);
+                let r = cam.get_ray(u, v);
+                pixel_color += ray_color(r, &world, &mut rng, DEPTH-1);
+            }
+
+            
+            write_color(&mut file, pixel_color, SAMPLES_PER_PIXEL);
         }
     }
     println!("Program ended...\n");
