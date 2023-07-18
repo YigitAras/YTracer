@@ -13,6 +13,7 @@ mod vector3;
 mod sphere;
 mod utils;
 mod camera;
+mod material;
 
 use crate::color::*;
 use crate::hittable::*;
@@ -22,17 +23,17 @@ use crate::vector3::*;
 use crate::sphere::*;
 use crate::utils::*;
 use crate::camera::*;
+use crate::material::*;
 
 fn ray_color(r: Ray, world: &dyn Hittable , rng: &mut ThreadRng, depth: u64) -> Vec3 {
-    let mut rec: HitRecord = Default::default();
 
     if depth <= 0 {
         return Vec3::new(0.0, 0.0, 0.0);
     }
 
-    if world.hit(r, 0.00001, f64::MAX, &mut rec){
-        let target = rec.p + rec.normal + random_unit_vector(rng);
-        return ray_color(Ray::new(rec.p, target-rec.p), world, rng, depth) * 0.5;
+    if let Some(hit) = world.hit(r, 0.00001, f64::MAX){
+        let target = hit.p + hit.normal + random_in_hemisphere(hit.normal, rng);
+        return ray_color(Ray::new(hit.p, target-hit.p), world, rng, depth) * 0.5;
     }
 
     let unit_direction = Vec3::unit_vector(r.dir);

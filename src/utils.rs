@@ -38,3 +38,12 @@ pub fn random_in_unit_sphere(rng: &mut ThreadRng) -> Vec3 {
 pub fn random_unit_vector(rng: &mut ThreadRng) -> Vec3 {
     return Vec3::unit_vector(random_in_unit_sphere(rng));
 }
+
+pub fn random_in_hemisphere(normal: Vec3, rng: &mut ThreadRng) -> Vec3 {
+    let in_unit_sphere = random_in_unit_sphere(rng);
+    if in_unit_sphere.dot(normal) > 0.0 {
+        in_unit_sphere
+    } else {
+        -in_unit_sphere
+    }
+}
