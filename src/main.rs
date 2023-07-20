@@ -32,8 +32,10 @@ fn ray_color(r: Ray, world: &dyn Hittable , rng: &mut ThreadRng, depth: u64) -> 
     }
 
     if let Some(hit) = world.hit(r, 0.00001, f64::MAX){
-        let target = hit.p + hit.normal + random_in_hemisphere(hit.normal, rng);
-        return ray_color(Ray::new(hit.p, target-hit.p), world, rng, depth) * 0.5;
+        if let Some((scattered, attenuation)) = hit.mat_ptr.scatter(r, &hit) {
+            return ray_color(scattered, world, rng, depth-1) * attenuation;
+        }
+        return Vec3::new(0.0, 0.0, 0.0);
     }
 
     let unit_direction = Vec3::unit_vector(r.dir);
@@ -55,8 +57,16 @@ fn main() {
     const DEPTH: u64 = 50;
     // World
     let mut world: HittableList = Default::default();
-    world.add(Box::new(Sphere::new(Vec3::new(0.0,0.0,-1.0), 0.5)));
-    world.add(Box::new(Sphere::new(Vec3::new(0.0,-100.5,-1.0), 100.0)));
+    let material_ground = Box::new(Lambertian{albedo: Vec3::new(0.8,0.8,0.0)});
+    let material_center = Box::new(Lambertian{albedo: Vec3::new(0.7,0.3,0.3)});
+    let material_left = Box::new(Metal{albedo: Vec3::new(0.8,0.8,0.8)});
+    let material_right = Box::new(Metal{albedo: Vec3::new(0.8,0.6,0.2)});
+
+
+    world.add(Box::new(Sphere::new(Vec3::new(0.0,-100.5,-1.0), 100.0, material_ground)));
+    world.add(Box::new(Sphere::new(Vec3::new(0.0,0.0,-1.0), 0.5, material_center)));
+    world.add(Box::new(Sphere::new(Vec3::new(-1.0, 0.0,-1.0), 0.5, material_left)));
+    world.add(Box::new(Sphere::new(Vec3::new(1.0,0.0,-1.0), 0.5, material_right)));
 
     // Camera
     let cam = Camera::new();

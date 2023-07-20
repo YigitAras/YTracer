@@ -6,14 +6,16 @@ use crate::material::*;
 pub struct HitRecord {
     pub p: Vec3,
     pub normal: Vec3,
+    pub mat_ptr: Box<dyn Material>,
     pub t: f64,
 }
 
 impl HitRecord {
-    pub fn new(point: Vec3, normal: Vec3, t: f64, front_face: bool) -> Self {
+    pub fn new(point: Vec3, normal: Vec3, t: f64, mat_ptr: Box<dyn Material>) -> Self {
         Self {
             p: point,
             normal: normal,
+            mat_ptr: mat_ptr,
             t: t,
         }
     }
