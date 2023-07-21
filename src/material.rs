@@ -34,7 +34,22 @@ pub struct Lambertian {
 
 #[derive(Clone)]
 pub struct Metal {
-    pub albedo: Vec3
+    pub albedo: Vec3,
+    pub fuzz: f64
+}
+
+impl Metal {
+    pub fn new(a: Vec3, f: f64) -> Self {
+        Self {
+            albedo: a,
+            fuzz: if f < 1.0 {
+                f
+            } else {
+                1.0
+            }
+
+        }
+    }
 }
 
 impl Material for Lambertian {
