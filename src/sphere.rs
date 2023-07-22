@@ -3,16 +3,18 @@ use crate::vector3::*;
 use crate::ray::*;
 use crate::material::*;
 
+use std::rc::Rc;
+
 
 #[derive(Clone)]
 pub struct Sphere {
     center: Vec3,
     radius: f64,
-    mat_ptr: Box<dyn Material>
+    mat_ptr: Rc<dyn Material>
 }
 
 impl Sphere {
-    pub fn new(cen: Vec3, r: f64, mat_ptr: Box<dyn Material>) ->Self {
+    pub fn new(cen: Vec3, r: f64, mat_ptr: Rc<dyn Material>) ->Self {
         Self {
             center: cen,
             radius: r,
