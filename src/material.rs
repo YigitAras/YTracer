@@ -28,11 +28,10 @@ fn refract(uv: Vec3, n: Vec3, etai_over_etat: f64) -> Vec3{
     r_out_perp + r_out_parallel
 }
 
-fn reflectance(cosine: f64, ref_idx: f64) -> bool {
+fn reflectance(cosine: f64, ref_idx: f64) -> f64 {
     // Schlick approximation
-    let mut rng = rand::thread_rng();
-    let r0 = ((1.0-ref_idx)/(1.0+ref_idx)).powi(2);
-    (r0 + (1.0-r0) * (1.0-cosine).powi(5)) > rng.gen_range(0.0..1.0)
+    let r0 = ((1.0 - ref_idx) / (1.0 + ref_idx)).powi(2);
+    r0 + (1.0 -r0) * (1.0 - cosine).powi(5)
 }
 
 pub trait Material: DynClone  {
@@ -101,25 +100,24 @@ impl Material for Metal {
 
 impl Material for Dielectric {
     fn scatter(&self, r_in: Ray, hit: &HitRecord) -> Option<(Ray, Vec3)> {
-        let attenuation = Vec3::new(1.0,1.0,1.0);
-        let refraction_ratio = 1.0/self.ir;
-
-        let unit_dir = Vec3::unit_vector(r_in.dir);
-        
-        let cos_theta = f64::min(-unit_dir.dot(hit.normal), 1.0);
-        let sin_theta = f64::sqrt(1.0-cos_theta*cos_theta);
-
-        let cannot_refract = refraction_ratio * sin_theta > 1.0;
-        let direction: Vec3;
-
-        if cannot_refract || reflectance(cos_theta, refraction_ratio){
-            direction = reflect(unit_dir, hit.normal);
+        let mut rng = rand::thread_rng();
+        let attenuation = Vector3::new(1.0, 1.0, 1.0);
+        let (outward_normal, ni_over_nt, cosine) = if ray.direction().dot(&hit.normal) > 0.0 {
+            let cosine = self.ref_idx * ray.direction().dot(&hit.normal) / ray.direction().magnitude();
+            (-hit.normal, self.ref_idx, cosine)
         } else {
-            direction = refract(unit_dir, hit.normal, refraction_ratio);
+            let cosine = -ray.direction().dot(&hit.normal) / ray.direction().magnitude();
+            (hit.normal, 1.0 / self.ref_idx, cosine)
+        };
+        if let Some(refracted) = refract(&ray.direction(), &outward_normal, ni_over_nt) {
+            let reflect_prob = schlick(cosine, self.ref_idx);
+            if rand::thread_rng().gen::<f32>() >= reflect_prob {
+                let scattered = Ray::new(hit.p, refracted);
+                return Some((scattered, attenuation))
+            }
         }
-        
-        let scattered = Ray::new(hit.p, direction);
-
+        let reflected = reflect(&ray.direction(), &hit.normal);
+        let scattered = Ray::new(hit.p, reflected);
         Some((scattered, attenuation))
     }
 }
