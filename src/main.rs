@@ -54,31 +54,40 @@ fn main() {
     // World
     let mut world: HittableList = Default::default();
 
-    let material_ground = Rc::new(Lambertian {
+    let material_ground: Rc<dyn Material> = Rc::new(Lambertian {
         albedo: Vec3::new(0.8, 0.8, 0.0),
     });
-    let material_center = Rc::new(Lambertian {
+    let material_center: Rc<dyn Material> = Rc::new(Lambertian {
         albedo: Vec3::new(0.1, 0.2, 0.5),
     });
-    let material_left = Rc::new(Dielectric { ir: 1.5 });
-    // let material_left2 = Rc::new(Dielectric { ir: 1.5 });
-    let material_right = Rc::new(Metal::new(Vec3::new(0.8, 0.6, 0.2), 0.0));
+    let material_left: Rc<dyn Material> = Rc::new(Dielectric { ir: 1.5 });
+    let material_right: Rc<dyn Material> = Rc::new(Metal::new(Vec3::new(0.8, 0.6, 0.2), 0.0));
+
+    // let material_ground = Rc::new(Lambertian {
+    //     albedo: Vec3::new(0.8, 0.8, 0.0),
+    // });
+    // let material_center = Rc::new(Lambertian {
+    //     albedo: Vec3::new(0.1, 0.2, 0.5),
+    // });
+    // let material_left = Rc::new(Dielectric { ir: 1.5 });
+    // // let material_left2 = Rc::new(Dielectric { ir: 1.5 });
+    // let material_right = Rc::new(Metal::new(Vec3::new(0.8, 0.6, 0.2), 0.0));
 
     world.add(Box::new(Sphere::new(
         Vec3::new(0.0, -100.5, -1.0),
         100.0,
-        Rc::clone(&(material_ground as Rc<dyn Material>)),
+        Rc::clone(&material_ground),
     )));
     world.add(Box::new(Sphere::new(
         Vec3::new(0.0, 0.0, -1.0),
         0.5,
-        Rc::clone(&(material_center as Rc<dyn Material>)),
+        Rc::clone(&material_center),
     )));
     world.add(Box::new(Sphere::new(
         Vec3::new(-1.0, 0.0, -1.0),
         0.5,
         // gotta clone the rc here if you want to reuse it later another time
-        Rc::clone(&(material_left.clone() as Rc<dyn Material>)),
+        Rc::clone(&material_left.clone()),
     )));
 
     /*
@@ -92,13 +101,13 @@ fn main() {
     world.add(Box::new(Sphere::new(
         Vec3::new(-1.0, 0.0, -1.0),
         -0.4,
-        Rc::clone(&(material_left as Rc<dyn Material>)),
+        Rc::clone(&material_left),
     )));
 
     world.add(Box::new(Sphere::new(
         Vec3::new(1.0, 0.0, -1.0),
         0.5,
-        Rc::clone(&(material_right as Rc<dyn Material>)),
+        Rc::clone(&material_right),
     )));
 
     // Camera
