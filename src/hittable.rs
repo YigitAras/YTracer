@@ -2,16 +2,17 @@ use crate::ray::*;
 use crate::vector3::*;
 use crate::material::*;
 
+use std::rc::Rc;
 
-pub struct HitRecord {
+pub struct HitRecord<'a> {
     pub p: Vec3,
     pub normal: Vec3,
-    pub mat_ptr: Box<dyn Material>,
+    pub mat_ptr: &'a dyn Material,
     pub t: f64,
 }
 
-impl HitRecord {
-    pub fn new(point: Vec3, normal: Vec3, t: f64, mat_ptr: Box<dyn Material>) -> Self {
+impl<'a> HitRecord<'a> {
+    pub fn new(point: Vec3, normal: Vec3, t: f64, mat_ptr: &'a dyn Material) -> Self {
         Self {
             p: point,
             normal: normal,

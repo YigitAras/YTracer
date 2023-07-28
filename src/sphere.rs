@@ -7,14 +7,14 @@ use std::rc::Rc;
 
 
 #[derive(Clone)]
-pub struct Sphere {
+pub struct Sphere<'a> {
     center: Vec3,
     radius: f64,
-    mat_ptr: Rc<dyn Material>
+    mat_ptr: &'a dyn Material
 }
 
-impl Sphere {
-    pub fn new(cen: Vec3, r: f64, mat_ptr: Rc<dyn Material>) ->Self {
+impl<'a> Sphere<'a> {
+    pub fn new(cen: Vec3, r: f64, mat_ptr: &'a dyn Material) ->Self {
         Self {
             center: cen,
             radius: r,
@@ -23,7 +23,7 @@ impl Sphere {
     }
 }
 
-impl Hittable for Sphere {
+impl<'a> Hittable for Sphere<'a> {
     fn hit(&self, r: Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
         let oc = r.orig - self.center;
         let a  = r.dir.lenght_squared();
@@ -50,6 +50,6 @@ impl Hittable for Sphere {
         let normal = (p_temp - self.center) / self.radius;
 
 
-        return Some(HitRecord { p: p_temp, normal: normal, t: t_temp, mat_ptr: dyn_clone::clone_box(&*self.mat_ptr)});
+        return Some(HitRecord { p: p_temp, normal: normal, t: t_temp, mat_ptr: &*self.mat_ptr});
     }
 }

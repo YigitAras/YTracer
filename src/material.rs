@@ -3,7 +3,7 @@ use crate::ray::*;
 use crate::utils::*;
 use crate::vector3::*;
 
-use dyn_clone::*;
+// use dyn_clone::*;
 use rand::Rng;
 
 fn random_in_unit_sphere() -> Vec3 {
@@ -34,11 +34,11 @@ fn reflectance(cosine: f64, ref_idx: f64) -> f64 {
     r0 + (1.0 - r0) * (1.0 - cosine).powi(5)
 }
 
-pub trait Material: DynClone {
+pub trait Material { //: DynClone {
     fn scatter(&self, r_in: Ray, hit: &HitRecord) -> Option<(Ray, Vec3)>;
 }
 
-dyn_clone::clone_trait_object!(Material);
+// dyn_clone::clone_trait_object!(Material);
 
 #[derive(Clone, Copy)]
 pub struct Lambertian {
