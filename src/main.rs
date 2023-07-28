@@ -1,7 +1,8 @@
 use kdam::tqdm;
 use rand::rngs::ThreadRng;
 use rand::Rng;
-use std::rc::Rc;
+use rayon::prelude::*;
+use std::sync::Arc;
 use std::{fs::OpenOptions, io::BufWriter, io::Write};
 
 mod camera;
@@ -43,6 +44,8 @@ fn ray_color(r: Ray, world: &dyn Hittable, rng: &mut ThreadRng, depth: u64) -> V
 
 fn main() {
     println!("Program started...\n");
+    // Set number of threads
+    rayon::ThreadPoolBuilder::new().num_threads(16).build_global().unwrap();
     let mut rng = rand::thread_rng();
 
     // Image related
@@ -53,65 +56,55 @@ fn main() {
     const DEPTH: u64 = 50;
     // World
     let mut world: HittableList = Default::default();
-
-    let material_ground: Rc<dyn Material> = Rc::new(Lambertian {
+    let R = f64::cos(std::f64::consts::PI/4.0);
+    
+    let material_ground: Arc<dyn Material + Sync + Send> = Arc::new(Lambertian {
         albedo: Vec3::new(0.8, 0.8, 0.0),
     });
-    let material_center: Rc<dyn Material> = Rc::new(Lambertian {
+    let material_center: Arc<dyn Material + Sync + Send> = Arc::new(Lambertian {
         albedo: Vec3::new(0.1, 0.2, 0.5),
     });
-    let material_left: Rc<dyn Material> = Rc::new(Dielectric { ir: 1.5 });
-    let material_right: Rc<dyn Material> = Rc::new(Metal::new(Vec3::new(0.8, 0.6, 0.2), 0.0));
-
-    // let material_ground = Rc::new(Lambertian {
-    //     albedo: Vec3::new(0.8, 0.8, 0.0),
-    // });
-    // let material_center = Rc::new(Lambertian {
-    //     albedo: Vec3::new(0.1, 0.2, 0.5),
-    // });
-    // let material_left = Rc::new(Dielectric { ir: 1.5 });
-    // // let material_left2 = Rc::new(Dielectric { ir: 1.5 });
-    // let material_right = Rc::new(Metal::new(Vec3::new(0.8, 0.6, 0.2), 0.0));
-
+    let material_left: Arc<dyn Material + Sync + Send> = Arc::new(Dielectric { ir: 1.5 });
+    let material_right: Arc<dyn Material + Sync + Send> = Arc::new(Metal::new(Vec3::new(0.8, 0.6, 0.2), 0.0));
+    
     world.add(Box::new(Sphere::new(
         Vec3::new(0.0, -100.5, -1.0),
         100.0,
-        Rc::clone(&material_ground),
+        Arc::clone(&material_ground),
     )));
     world.add(Box::new(Sphere::new(
         Vec3::new(0.0, 0.0, -1.0),
         0.5,
-        Rc::clone(&material_center),
+        Arc::clone(&material_center),
     )));
     world.add(Box::new(Sphere::new(
         Vec3::new(-1.0, 0.0, -1.0),
         0.5,
         // gotta clone the rc here if you want to reuse it later another time
-        Rc::clone(&material_left.clone()),
+        Arc::clone(&material_left),
     )));
-
-    /*
-    world.add(Box::new(Sphere::new(
-        Vec3::new(-1.0, 0.0, -1.0),
-        -0.4,
-        Rc::clone(&material_left) as _,   // Tell the compiler to not coerce the type?
-    )));
-    */
 
     world.add(Box::new(Sphere::new(
         Vec3::new(-1.0, 0.0, -1.0),
-        -0.4,
-        Rc::clone(&material_left),
+        -0.45,
+        Arc::clone(&material_left),
     )));
 
     world.add(Box::new(Sphere::new(
         Vec3::new(1.0, 0.0, -1.0),
         0.5,
-        Rc::clone(&material_right),
+        Arc::clone(&material_right),
     )));
+   
 
     // Camera
-    let cam = Camera::new();
+    
+    let cam = Camera::new(
+        Vec3::new(-2.0, 2.0, 1.0),
+        Vec3::new(0.0, 0.0, -1.0),
+        Vec3::new(0.0, 1.0, 0.0),
+        20.0, 
+        ASPECT_RATIO);
 
     // File
     std::fs::create_dir_all("./outputs")
@@ -127,22 +120,43 @@ fn main() {
     let mut file = BufWriter::new(file);
     let data = format!("P3\n{IMAGE_WIDTH} {IMAGE_HEIGHT}\n255\n");
 
+    let img: [[Vec3; IMAGE_WIDTH as usize]; IMAGE_HEIGHT as usize];
+
     file.write_all(data.as_bytes())
         .expect("Unable to write the header!");
 
     // Render
     for j in tqdm!((0..IMAGE_HEIGHT).rev(), animation = "fillup") {
         for i in 0..IMAGE_WIDTH {
-            let mut pixel_color = Vec3::new(0.0, 0.0, 0.0);
+            // let mut sum = Vec3::new(0.0,0.0,0.0);
 
+            /* 
             for _ in 0..SAMPLES_PER_PIXEL {
                 let u = (i as f64 + rng.gen_range(0.0..1.0)) / ((IMAGE_WIDTH - 1) as f64);
                 let v = (j as f64 + rng.gen_range(0.0..1.0)) / ((IMAGE_HEIGHT - 1) as f64);
                 let r = cam.get_ray(u, v);
-                pixel_color += ray_color(r, &world, &mut rng, DEPTH - 1);
-            }
+                sum += ray_color(r, &world, &mut rng, DEPTH - 1);
+            }*/
+            
+            let sum: Vec3 = 
+                (0..SAMPLES_PER_PIXEL)
+                .into_par_iter()
+                .map(|_|
+                    {
+                        let mut rng = rand::thread_rng();
+                        let u = (i as f64 + rng.gen::<f64>()) / ((IMAGE_WIDTH - 1) as f64);
+                        let v = (j as f64 + rng.gen::<f64>()) / ((IMAGE_HEIGHT - 1) as f64);
+                        let ray = cam.get_ray(u, v);
+                        ray_color(ray, &world, &mut rng, DEPTH)
+                    }
+                )
+                .reduce(|| Vec3::new(0.0,0.0,0.0), |sum, i| sum + i);
+                
+        
+            
+            
 
-            write_color(&mut file, pixel_color, SAMPLES_PER_PIXEL);
+            write_color(&mut file, sum, SAMPLES_PER_PIXEL);
         }
     }
     println!("Program ended...\n");

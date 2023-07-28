@@ -3,17 +3,17 @@ use crate::material::*;
 use crate::ray::*;
 use crate::vector3::*;
 
-use std::rc::Rc;
+use std::sync::Arc;
 
 #[derive(Clone)]
 pub struct Sphere {
     center: Vec3,
     radius: f64,
-    mat_ptr: Rc<dyn Material>,
+    mat_ptr: Arc<dyn Material + Sync + Send>,
 }
 
 impl Sphere {
-    pub fn new(cen: Vec3, r: f64, mat_ptr: Rc<dyn Material>) -> Self {
+    pub fn new(cen: Vec3, r: f64, mat_ptr: Arc<dyn Material + Sync + Send>) -> Self {
         Self {
             center: cen,
             radius: r,
@@ -52,7 +52,7 @@ impl Hittable for Sphere {
             p_temp,
             normal,
             t_temp,
-            Rc::clone(&self.mat_ptr),
+            Arc::clone(&self.mat_ptr),
         ))
     }
 }
