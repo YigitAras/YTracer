@@ -67,39 +67,38 @@ fn main() {
     world.add(Box::new(Sphere::new(
         Vec3::new(0.0, -100.5, -1.0),
         100.0,
-        &*material_ground,
+        Rc::clone(&(material_ground as Rc<dyn Material>)),
     )));
     world.add(Box::new(Sphere::new(
         Vec3::new(0.0, 0.0, -1.0),
         0.5,
-        &*material_center,
+        Rc::clone(&(material_center as Rc<dyn Material>)),
     )));
     world.add(Box::new(Sphere::new(
         Vec3::new(-1.0, 0.0, -1.0),
         0.5,
-        &*material_left,
+        // gotta clone the rc here if you want to reuse it later another time
+        Rc::clone(&(material_left.clone() as Rc<dyn Material>)),
     )));
-     
-     /* 
+
+    /*
     world.add(Box::new(Sphere::new(
         Vec3::new(-1.0, 0.0, -1.0),
         -0.4,
         Rc::clone(&material_left) as _,   // Tell the compiler to not coerce the type?
     )));
     */
-    
-     
+
     world.add(Box::new(Sphere::new(
         Vec3::new(-1.0, 0.0, -1.0),
         -0.4,
-        &*material_left),
-    ));
-    
+        Rc::clone(&(material_left as Rc<dyn Material>)),
+    )));
 
     world.add(Box::new(Sphere::new(
         Vec3::new(1.0, 0.0, -1.0),
         0.5,
-        &*material_right,
+        Rc::clone(&(material_right as Rc<dyn Material>)),
     )));
 
     // Camera
