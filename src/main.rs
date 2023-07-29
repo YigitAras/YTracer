@@ -3,6 +3,7 @@ use rand::rngs::ThreadRng;
 use rand::Rng;
 use rayon::prelude::*;
 use std::sync::Arc;
+use std::time::Duration;
 use std::{fs::OpenOptions, io::BufWriter, io::Write};
 
 mod camera;
@@ -16,13 +17,12 @@ mod utils;
 mod vector3;
 
 use crate::camera::*;
-use crate::color::*;
 use crate::hittable::*;
 use crate::hittable_list::*;
 use crate::material::*;
 use crate::ray::*;
 use crate::sphere::*;
-
+use crate::utils::*;
 use crate::vector3::*;
 
 fn ray_color(r: Ray, world: &dyn Hittable, rng: &mut ThreadRng, depth: u64) -> Vec3 {
@@ -45,11 +45,7 @@ fn ray_color(r: Ray, world: &dyn Hittable, rng: &mut ThreadRng, depth: u64) -> V
 fn main() {
     println!("Program started...\n");
     // Set number of threads
-    rayon::ThreadPoolBuilder::new()
-        .num_threads(16)
-        .build_global()
-        .unwrap();
-    let mut _rng = rand::thread_rng();
+    // let mut rng = rand::thread_rng();
 
     // Image related
     const ASPECT_RATIO: f64 = 16.0 / 9.0;
@@ -59,7 +55,6 @@ fn main() {
     const DEPTH: u64 = 50;
     // World
     let mut world: HittableList = Default::default();
-    let R = f64::cos(std::f64::consts::PI / 4.0);
 
     let material_ground: Arc<dyn Material + Sync + Send> = Arc::new(Lambertian {
         albedo: Vec3::new(0.8, 0.8, 0.0),
@@ -124,38 +119,45 @@ fn main() {
     let mut file = BufWriter::new(file);
     let data = format!("P3\n{IMAGE_WIDTH} {IMAGE_HEIGHT}\n255\n");
 
-    let _img: [[Vec3; IMAGE_WIDTH as usize]; IMAGE_HEIGHT as usize];
-
     file.write_all(data.as_bytes())
         .expect("Unable to write the header!");
 
     // Render
-    for j in tqdm!((0..IMAGE_HEIGHT).rev(), animation = "fillup") {
-        for i in 0..IMAGE_WIDTH {
-            /*
-            let mut sum = Vec3::new(0.0, 0.0, 0.0);
-
-            for _ in 0..SAMPLES_PER_PIXEL {
-                let u = (i as f64 + _rng.gen_range(0.0..1.0)) / ((IMAGE_WIDTH - 1) as f64);
-                let v = (j as f64 + _rng.gen_range(0.0..1.0)) / ((IMAGE_HEIGHT - 1) as f64);
-                let r = cam.get_ray(u, v);
-                sum += ray_color(r, &world, &mut _rng, DEPTH - 1);
-            }
-            */
-
-            let sum: Vec3 = (0..SAMPLES_PER_PIXEL)
+    // TODO: If you do parallel on both for loops, technically should be slower...
+    let rows: Vec<Vec<Vec3>> = tqdm!((0..IMAGE_HEIGHT).rev(), animation = "fillup")
+        .map(|j| {
+            (0..IMAGE_WIDTH)
                 .into_par_iter()
-                .map(|_| {
+                .map(|i| {
                     let mut rng = rand::thread_rng();
-                    let u = (i as f64 + rng.gen::<f64>()) / ((IMAGE_WIDTH - 1) as f64);
-                    let v = (j as f64 + rng.gen::<f64>()) / ((IMAGE_HEIGHT - 1) as f64);
-                    let ray = cam.get_ray(u, v);
-                    ray_color(ray, &world, &mut rng, DEPTH)
+                    let mut col = Vec3::new(0.0, 0.0, 0.0);
+                    for _ in 0..SAMPLES_PER_PIXEL {
+                        let u = (i as f64 + rng.gen::<f64>()) / IMAGE_WIDTH as f64;
+                        let v = (j as f64 + rng.gen::<f64>()) / IMAGE_HEIGHT as f64;
+                        let r = cam.get_ray(u, v);
+                        col += ray_color(r, &world, &mut rng, DEPTH);
+                    }
+                    col /= SAMPLES_PER_PIXEL as f64;
+                    col = Vec3::new(f64::sqrt(col.x), f64::sqrt(col.y), f64::sqrt(col.z));
+                    col = col * 255.99;
+                    col
                 })
-                .reduce(|| Vec3::new(0.0, 0.0, 0.0), |sum, i| sum + i);
+                .collect()
+        })
+        .collect();
 
-            write_color(&mut file, sum, SAMPLES_PER_PIXEL);
+    println!("Now writing the values...\n");
+    for r in rows {
+        for col in r {
+            //print!("{} {} {}\n", col.r() as i32, col.g() as i32, col.b() as i32);
+            let ir = col.x as u64;
+            let ig = col.y as u64;
+            let ib = col.z as u64;
+            let tmp_data: String = format!("{ir} {ig} {ib}\n");
+            file.write(tmp_data.as_bytes())
+                .expect("Failed to write line of pixel data...");
         }
     }
+
     println!("Program ended...\n");
 }
