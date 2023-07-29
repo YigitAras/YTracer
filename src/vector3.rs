@@ -10,7 +10,7 @@ pub struct Vec3 {
 // Methods for the Vec3 class
 impl Vec3 {
     pub fn new(x: f64, y: f64, z: f64) -> Self {
-        Self { x: x, y: y, z: z }
+        Self { x, y, z }
     }
     pub fn dot(self, rhs: Vec3) -> f64 {
         self.x * rhs.x + self.y * rhs.y + self.z * rhs.z
@@ -135,5 +135,3 @@ impl DivAssign<f64> for Vec3 {
         self.z *= 1.0 / rhs;
     }
 }
-
-

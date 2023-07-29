@@ -12,12 +12,17 @@ pub struct HitRecord {
 }
 
 impl HitRecord {
-    pub fn new(point: Vec3, normal: Vec3, t: f64, mat_ptr: Arc<dyn Material + Sync + Send>) -> Self {
+    pub fn new(
+        point: Vec3,
+        normal: Vec3,
+        t: f64,
+        mat_ptr: Arc<dyn Material + Sync + Send>,
+    ) -> Self {
         Self {
             p: point,
-            normal: normal,
+            normal,
             mat_ptr,
-            t: t,
+            t,
         }
     }
 }

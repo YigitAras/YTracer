@@ -1,6 +1,6 @@
 use crate::hittable::*;
 use crate::ray::*;
-use crate::utils::*;
+
 use crate::vector3::*;
 
 // use dyn_clone::*;
@@ -34,7 +34,8 @@ fn reflectance(cosine: f64, ref_idx: f64) -> f64 {
     r0 + (1.0 - r0) * (1.0 - cosine).powi(5)
 }
 
-pub trait Material { //: DynClone {
+pub trait Material {
+    //: DynClone {
     fn scatter(&self, r_in: Ray, hit: &HitRecord) -> Option<(Ray, Vec3)>;
 }
 
@@ -66,7 +67,7 @@ impl Metal {
 }
 
 impl Material for Lambertian {
-    fn scatter(&self, r_in: Ray, hit: &HitRecord) -> Option<(Ray, Vec3)> {
+    fn scatter(&self, _r_in: Ray, hit: &HitRecord) -> Option<(Ray, Vec3)> {
         let mut scatter_dir = hit.normal + random_in_unit_sphere();
 
         if scatter_dir.near_zero() {

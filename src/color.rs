@@ -1,7 +1,7 @@
 use std::{io::BufWriter, io::Write};
 
-use crate::vector3::*;
 use crate::utils::*;
+use crate::vector3::*;
 
 pub fn write_color(buff: &mut BufWriter<std::fs::File>, color: Vec3, samples_per_pixel: u64) {
     let mut r = color.x;
@@ -17,8 +17,6 @@ pub fn write_color(buff: &mut BufWriter<std::fs::File>, color: Vec3, samples_per
     let ir = (256.0 * clamp(r, 0.0, 0.999)) as u64;
     let ig = (256.0 * clamp(g, 0.0, 0.999)) as u64;
     let ib = (256.0 * clamp(b, 0.0, 0.999)) as u64;
-
-
 
     let tmp_data: String = format!("{ir} {ig} {ib}\n");
     buff.write(tmp_data.as_bytes())
