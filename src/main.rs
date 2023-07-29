@@ -49,7 +49,7 @@ fn main() {
         .num_threads(16)
         .build_global()
         .unwrap();
-    let _rng = rand::thread_rng();
+    let mut _rng = rand::thread_rng();
 
     // Image related
     const ASPECT_RATIO: f64 = 16.0 / 9.0;
@@ -132,15 +132,16 @@ fn main() {
     // Render
     for j in tqdm!((0..IMAGE_HEIGHT).rev(), animation = "fillup") {
         for i in 0..IMAGE_WIDTH {
-            // let mut sum = Vec3::new(0.0,0.0,0.0);
-
             /*
+            let mut sum = Vec3::new(0.0, 0.0, 0.0);
+
             for _ in 0..SAMPLES_PER_PIXEL {
-                let u = (i as f64 + rng.gen_range(0.0..1.0)) / ((IMAGE_WIDTH - 1) as f64);
-                let v = (j as f64 + rng.gen_range(0.0..1.0)) / ((IMAGE_HEIGHT - 1) as f64);
+                let u = (i as f64 + _rng.gen_range(0.0..1.0)) / ((IMAGE_WIDTH - 1) as f64);
+                let v = (j as f64 + _rng.gen_range(0.0..1.0)) / ((IMAGE_HEIGHT - 1) as f64);
                 let r = cam.get_ray(u, v);
-                sum += ray_color(r, &world, &mut rng, DEPTH - 1);
-            }*/
+                sum += ray_color(r, &world, &mut _rng, DEPTH - 1);
+            }
+            */
 
             let sum: Vec3 = (0..SAMPLES_PER_PIXEL)
                 .into_par_iter()
