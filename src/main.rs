@@ -3,11 +3,9 @@ use rand::rngs::ThreadRng;
 use rand::Rng;
 use rayon::prelude::*;
 use std::sync::Arc;
-use std::time::Duration;
 use std::{fs::OpenOptions, io::BufWriter, io::Write};
 
 mod camera;
-mod color;
 mod hittable;
 mod hittable_list;
 mod material;
@@ -41,6 +39,85 @@ fn ray_color(r: Ray, world: &dyn Hittable, rng: &mut ThreadRng, depth: u64) -> V
     let t = 0.5 * (unit_direction.y + 1.0);
     Vec3::new(1.0, 1.0, 1.0) * (1.0 - t) + Vec3::new(0.5, 0.7, 1.0) * t
 }
+fn random_vec(l: f64, h: f64) -> Vec3 {
+    let mut rng = rand::thread_rng();
+    Vec3 {
+        x: rng.gen_range(l..h),
+        y: rng.gen_range(l..h),
+        z: rng.gen_range(l..h),
+    }
+}
+
+fn random_scene() -> HittableList {
+    let mut rng = rand::thread_rng();
+    let mut world: HittableList = Default::default();
+    let material_ground: Arc<dyn Material + Sync + Send> = Arc::new(Lambertian {
+        albedo: Vec3::new(0.5, 0.5, 0.5),
+    });
+    world.add(Box::new(Sphere::new(
+        Vec3::new(0.0, -1000.0, 0.0),
+        1000.0,
+        Arc::clone(&material_ground),
+    )));
+    for a in -11..11 {
+        for b in -11..11 {
+            let choose_mat = rng.gen::<f64>();
+            let center = Vec3::new(
+                a as f64 + 0.9 * rng.gen::<f64>(),
+                0.2,
+                b as f64 + 0.9 * rng.gen::<f64>(),
+            );
+            if (center - (Vec3::new(4.0, 0.2, 0.0))).length() > 0.9 {
+                if choose_mat < 0.8 {
+                    // diffuse
+                    let albedo = random_vec(0.0, 1.0) * random_vec(0.0, 1.0);
+                    let sphere_mat: Arc<dyn Material + Sync + Send> =
+                        Arc::new(Lambertian { albedo: albedo });
+                    world.add(Box::new(Sphere::new(center, 0.2, Arc::clone(&sphere_mat))));
+                } else if choose_mat < 0.95 {
+                    // metal
+                    let albedo = random_vec(0.5, 1.0);
+                    let fuzz = rng.gen::<f64>();
+                    let sphere_mat: Arc<dyn Material + Sync + Send> = Arc::new(Metal {
+                        albedo: albedo,
+                        fuzz: fuzz,
+                    });
+                    world.add(Box::new(Sphere::new(center, 0.2, Arc::clone(&sphere_mat))));
+                } else {
+                    // glass
+                    let sphere_mat: Arc<dyn Material + Sync + Send> =
+                        Arc::new(Dielectric { ir: 1.5 });
+                    world.add(Box::new(Sphere::new(center, 0.2, Arc::clone(&sphere_mat))));
+                }
+            }
+        }
+    }
+    let mat1: Arc<dyn Material + Sync + Send> = Arc::new(Dielectric { ir: 1.5 });
+    let mat2: Arc<dyn Material + Sync + Send> = Arc::new(Lambertian {
+        albedo: Vec3::new(0.4, 0.2, 0.1),
+    });
+    let mat3: Arc<dyn Material + Sync + Send> = Arc::new(Metal {
+        albedo: Vec3::new(0.7, 0.6, 0.5),
+        fuzz: 0.0,
+    });
+
+    world.add(Box::new(Sphere::new(
+        Vec3::new(0.0, 1.0, 0.0),
+        1.0,
+        Arc::clone(&mat1),
+    )));
+    world.add(Box::new(Sphere::new(
+        Vec3::new(-4.0, 1.0, 0.0),
+        1.0,
+        Arc::clone(&mat2),
+    )));
+    world.add(Box::new(Sphere::new(
+        Vec3::new(4.0, 1.0, 0.0),
+        1.0,
+        Arc::clone(&mat3),
+    )));
+    world
+}
 
 fn main() {
     println!("Program started...\n");
@@ -48,14 +125,15 @@ fn main() {
     // let mut rng = rand::thread_rng();
 
     // Image related
-    const ASPECT_RATIO: f64 = 16.0 / 9.0;
-    const IMAGE_WIDTH: u64 = 1080;
+    const ASPECT_RATIO: f64 = 3.0 / 2.0;
+    const IMAGE_WIDTH: u64 = 1200;
     const IMAGE_HEIGHT: u64 = (IMAGE_WIDTH as f64 / ASPECT_RATIO) as u64;
-    const SAMPLES_PER_PIXEL: u64 = 200;
+    const SAMPLES_PER_PIXEL: u64 = 500;
     const DEPTH: u64 = 50;
     // World
-    let mut world: HittableList = Default::default();
+    let world: HittableList = random_scene();
 
+    /*
     let material_ground: Arc<dyn Material + Sync + Send> = Arc::new(Lambertian {
         albedo: Vec3::new(0.8, 0.8, 0.0),
     });
@@ -94,15 +172,23 @@ fn main() {
         0.5,
         Arc::clone(&material_right),
     )));
+    */
 
     // Camera
+    let aperture = 0.1;
+    let lookfrom = Vec3::new(13.0, 2.0, 3.0);
+    let lookat = Vec3::new(0.0, 0.0, 0.0);
+    let vup = Vec3::new(0.0, 1.0, 0.0);
+    let dist_to_focus = 10.0;
 
     let cam = Camera::new(
-        Vec3::new(-2.0, 2.0, 1.0),
-        Vec3::new(0.0, 0.0, -1.0),
-        Vec3::new(0.0, 1.0, 0.0),
+        lookfrom,
+        lookat,
+        vup,
         20.0,
         ASPECT_RATIO,
+        aperture,
+        dist_to_focus,
     );
 
     // File
@@ -137,9 +223,11 @@ fn main() {
                         let r = cam.get_ray(u, v);
                         col += ray_color(r, &world, &mut rng, DEPTH);
                     }
-                    col /= SAMPLES_PER_PIXEL as f64;
+                    col /= (SAMPLES_PER_PIXEL as f64);
                     col = Vec3::new(f64::sqrt(col.x), f64::sqrt(col.y), f64::sqrt(col.z));
-                    col = col * 255.99;
+                    col.x = 256.0 * clamp(col.x, 0.0, 0.999);
+                    col.y = 256.0 * clamp(col.y, 0.0, 0.999);
+                    col.z = 256.0 * clamp(col.z, 0.0, 0.999);
                     col
                 })
                 .collect()

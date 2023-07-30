@@ -1,5 +1,4 @@
 use crate::vector3::*;
-use rand::rngs::ThreadRng;
 use rand::Rng;
 
 const PI: f64 = 3.141_592_653_589_793;
@@ -18,32 +17,13 @@ pub fn clamp(x: f64, min: f64, max: f64) -> f64 {
     x
 }
 
-pub fn random_vec(min: f64, max: f64, rng: &mut ThreadRng) -> Vec3 {
-    Vec3::new(
-        rng.gen_range(min..max),
-        rng.gen_range(min..max),
-        rng.gen_range(min..max),
-    )
-}
-
-pub fn random_in_unit_sphere(rng: &mut ThreadRng) -> Vec3 {
+pub fn random_in_unit_disk() -> Vec3 {
+    let mut rng = rand::thread_rng();
     loop {
-        let p = random_vec(-1.0, 1.0, rng);
-        if p.lenght_squared() >= 1.0 {
+        let p = Vec3::new(rng.gen_range(-1.0..1.0), rng.gen_range(-1.0..1.0), 0.0);
+        if p.lenght_squared() > 1.0 {
             continue;
         }
         return p;
-    }
-}
-pub fn random_unit_vector(rng: &mut ThreadRng) -> Vec3 {
-    Vec3::unit_vector(random_in_unit_sphere(rng))
-}
-
-pub fn random_in_hemisphere(normal: Vec3, rng: &mut ThreadRng) -> Vec3 {
-    let in_unit_sphere = random_in_unit_sphere(rng);
-    if in_unit_sphere.dot(normal) > 0.0 {
-        in_unit_sphere
-    } else {
-        -in_unit_sphere
     }
 }
