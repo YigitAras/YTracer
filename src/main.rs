@@ -5,6 +5,7 @@ use rayon::prelude::*;
 use std::sync::Arc;
 use std::{fs::OpenOptions, io::BufWriter, io::Write};
 
+mod aabb;
 mod camera;
 mod hittable;
 mod hittable_list;
@@ -14,14 +15,9 @@ mod sphere;
 mod utils;
 mod vector3;
 
-use crate::camera::*;
-use crate::hittable::*;
-use crate::hittable_list::*;
-use crate::material::*;
-use crate::ray::*;
-use crate::sphere::*;
-use crate::utils::*;
-use crate::vector3::*;
+use crate::{
+    camera::*, hittable::*, hittable_list::*, material::*, ray::*, sphere::*, utils::*, vector3::*,
+};
 
 fn ray_color(r: Ray, world: &dyn Hittable, rng: &mut ThreadRng, depth: u64) -> Vec3 {
     if depth <= 0 {
@@ -72,16 +68,14 @@ fn random_scene() -> HittableList {
                     // diffuse
                     let albedo = random_vec(0.0, 1.0) * random_vec(0.0, 1.0);
                     let sphere_mat: Arc<dyn Material + Sync + Send> =
-                        Arc::new(Lambertian { albedo: albedo });
+                        Arc::new(Lambertian { albedo });
                     world.add(Box::new(Sphere::new(center, 0.2, Arc::clone(&sphere_mat))));
                 } else if choose_mat < 0.95 {
                     // metal
                     let albedo = random_vec(0.5, 1.0);
                     let fuzz = rng.gen::<f64>();
-                    let sphere_mat: Arc<dyn Material + Sync + Send> = Arc::new(Metal {
-                        albedo: albedo,
-                        fuzz: fuzz,
-                    });
+                    let sphere_mat: Arc<dyn Material + Sync + Send> =
+                        Arc::new(Metal { albedo, fuzz });
                     world.add(Box::new(Sphere::new(center, 0.2, Arc::clone(&sphere_mat))));
                 } else {
                     // glass
@@ -209,7 +203,6 @@ fn main() {
         .expect("Unable to write the header!");
 
     // Render
-    // TODO: If you do parallel on both for loops, technically should be slower...
     let rows: Vec<Vec<Vec3>> = tqdm!((0..IMAGE_HEIGHT).rev(), animation = "fillup")
         .map(|j| {
             (0..IMAGE_WIDTH)
@@ -223,7 +216,7 @@ fn main() {
                         let r = cam.get_ray(u, v);
                         col += ray_color(r, &world, &mut rng, DEPTH);
                     }
-                    col /= (SAMPLES_PER_PIXEL as f64);
+                    col /= SAMPLES_PER_PIXEL as f64;
                     col = Vec3::new(f64::sqrt(col.x), f64::sqrt(col.y), f64::sqrt(col.z));
                     col.x = 256.0 * clamp(col.x, 0.0, 0.999);
                     col.y = 256.0 * clamp(col.y, 0.0, 0.999);
@@ -234,10 +227,9 @@ fn main() {
         })
         .collect();
 
-    println!("Now writing the values...\n");
+    println!("Now writing the values into the PPM file...\n");
     for r in rows {
         for col in r {
-            //print!("{} {} {}\n", col.r() as i32, col.g() as i32, col.b() as i32);
             let ir = col.x as u64;
             let ig = col.y as u64;
             let ib = col.z as u64;
