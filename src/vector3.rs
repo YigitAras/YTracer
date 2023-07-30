@@ -1,4 +1,6 @@
-use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign};
+use std::ops::{
+    Add, AddAssign, Div, DivAssign, Index, IndexMut, Mul, MulAssign, Neg, Sub, SubAssign,
+};
 
 #[derive(Copy, Clone, Debug, Default)]
 pub struct Vec3 {
@@ -133,5 +135,28 @@ impl DivAssign<f64> for Vec3 {
         self.x *= 1.0 / rhs;
         self.y *= 1.0 / rhs;
         self.z *= 1.0 / rhs;
+    }
+}
+
+impl Index<usize> for Vec3 {
+    type Output = f64;
+    fn index<'a>(&'a self, i: usize) -> &'a f64 {
+        match i {
+            0 => &self.x,
+            1 => &self.y,
+            2 => &self.z,
+            _ => &self.z, // Well should probably throw an error
+        }
+    }
+}
+
+impl IndexMut<usize> for Vec3 {
+    fn index_mut<'a>(&'a mut self, i: usize) -> &'a mut f64 {
+        match i {
+            0 => &mut self.x,
+            1 => &mut self.y,
+            2 => &mut self.z,
+            _ => &mut self.z, // Well should probably throw an error
+        }
     }
 }
