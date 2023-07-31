@@ -1,3 +1,4 @@
+use crate::aabb::*;
 use crate::material::*;
 use crate::ray::*;
 use crate::vector3::*;
@@ -29,4 +30,5 @@ impl HitRecord {
 
 pub trait Hittable: Sync + Send {
     fn hit(&self, r: Ray, t_min: f64, t_max: f64) -> Option<HitRecord>;
+    fn bounding_box(&mut self, time0: f64, time1: f64) -> Option<Aabb>;
 }

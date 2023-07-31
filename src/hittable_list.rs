@@ -1,3 +1,4 @@
+use crate::aabb::*;
 use crate::hittable::*;
 use crate::ray::*;
 
@@ -32,5 +33,8 @@ impl Hittable for HittableList {
             }
         }
         hit_anything
+    }
+    fn bounding_box(&mut self, time0: f64, time1: f64) -> Option<Aabb> {
+        None
     }
 }
