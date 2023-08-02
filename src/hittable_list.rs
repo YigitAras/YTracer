@@ -1,3 +1,5 @@
+use std::default;
+
 use crate::aabb::*;
 use crate::hittable::*;
 use crate::ray::*;
@@ -34,7 +36,26 @@ impl Hittable for HittableList {
         }
         hit_anything
     }
-    fn bounding_box(&mut self, time0: f64, time1: f64) -> Option<Aabb> {
-        None
+    fn bounding_box(&mut self, time0: f64, time1: f64, output_box: &mut Aabb) -> bool {
+        if self.objects.is_empty() {
+            return false;
+        }
+
+        let mut temp_box: Aabb = Default::default();
+        let mut first_box = true;
+
+        for obj in self.objects.iter_mut() {
+            if obj.bounding_box(time0, time1, &mut temp_box) {
+                return false;
+            }
+            *output_box = if first_box {
+                temp_box
+            } else {
+                output_box.surrounding_box(temp_box)
+            };
+            first_box = true;
+        }
+
+        return true;
     }
 }

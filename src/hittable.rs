@@ -30,5 +30,6 @@ impl HitRecord {
 
 pub trait Hittable: Sync + Send {
     fn hit(&self, r: Ray, t_min: f64, t_max: f64) -> Option<HitRecord>;
-    fn bounding_box(&mut self, time0: f64, time1: f64) -> Option<Aabb>;
+    // TODO: Rustify this part, currently it is C-like
+    fn bounding_box(&mut self, time0: f64, time1: f64, output_box: &mut Aabb) -> bool;
 }
