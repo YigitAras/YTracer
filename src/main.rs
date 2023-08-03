@@ -6,6 +6,7 @@ use std::sync::Arc;
 use std::{fs::OpenOptions, io::BufWriter, io::Write};
 
 mod aabb;
+mod bvh;
 mod camera;
 mod hittable;
 mod hittable_list;
@@ -16,7 +17,8 @@ mod utils;
 mod vector3;
 
 use crate::{
-    camera::*, hittable::*, hittable_list::*, material::*, ray::*, sphere::*, utils::*, vector3::*,
+    bvh::*, camera::*, hittable::*, hittable_list::*, material::*, ray::*, sphere::*, utils::*,
+    vector3::*,
 };
 
 fn ray_color(r: Ray, world: &dyn Hittable, rng: &mut ThreadRng, depth: u64) -> Vec3 {
