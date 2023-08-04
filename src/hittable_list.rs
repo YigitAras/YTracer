@@ -1,4 +1,5 @@
 use std::default;
+use std::sync::Arc;
 
 use crate::aabb::*;
 use crate::hittable::*;
@@ -6,14 +7,14 @@ use crate::ray::*;
 
 #[derive(Default)]
 pub struct HittableList {
-    objects: Vec<Box<dyn Hittable>>,
+    objects: Vec<Arc<dyn Hittable>>,
 }
 
 impl HittableList {
     pub fn clear(&mut self) {
         self.objects.clear();
     }
-    pub fn add(&mut self, object: Box<dyn Hittable>) {
+    pub fn add(&mut self, object: Arc<dyn Hittable>) {
         self.objects.push(object);
     }
     pub fn new() -> Self {

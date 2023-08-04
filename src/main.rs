@@ -52,7 +52,7 @@ fn random_scene() -> HittableList {
     let material_ground: Arc<dyn Material + Sync + Send> = Arc::new(Lambertian {
         albedo: Vec3::new(0.5, 0.5, 0.5),
     });
-    world.add(Box::new(Sphere::new(
+    world.add(Arc::new(Sphere::new(
         Vec3::new(0.0, -1000.0, 0.0),
         1000.0,
         Arc::clone(&material_ground),
@@ -71,19 +71,19 @@ fn random_scene() -> HittableList {
                     let albedo = random_vec(0.0, 1.0) * random_vec(0.0, 1.0);
                     let sphere_mat: Arc<dyn Material + Sync + Send> =
                         Arc::new(Lambertian { albedo });
-                    world.add(Box::new(Sphere::new(center, 0.2, Arc::clone(&sphere_mat))));
+                    world.add(Arc::new(Sphere::new(center, 0.2, Arc::clone(&sphere_mat))));
                 } else if choose_mat < 0.95 {
                     // metal
                     let albedo = random_vec(0.5, 1.0);
                     let fuzz = rng.gen::<f64>();
                     let sphere_mat: Arc<dyn Material + Sync + Send> =
                         Arc::new(Metal { albedo, fuzz });
-                    world.add(Box::new(Sphere::new(center, 0.2, Arc::clone(&sphere_mat))));
+                    world.add(Arc::new(Sphere::new(center, 0.2, Arc::clone(&sphere_mat))));
                 } else {
                     // glass
                     let sphere_mat: Arc<dyn Material + Sync + Send> =
                         Arc::new(Dielectric { ir: 1.5 });
-                    world.add(Box::new(Sphere::new(center, 0.2, Arc::clone(&sphere_mat))));
+                    world.add(Arc::new(Sphere::new(center, 0.2, Arc::clone(&sphere_mat))));
                 }
             }
         }
@@ -97,17 +97,17 @@ fn random_scene() -> HittableList {
         fuzz: 0.0,
     });
 
-    world.add(Box::new(Sphere::new(
+    world.add(Arc::new(Sphere::new(
         Vec3::new(0.0, 1.0, 0.0),
         1.0,
         Arc::clone(&mat1),
     )));
-    world.add(Box::new(Sphere::new(
+    world.add(Arc::new(Sphere::new(
         Vec3::new(-4.0, 1.0, 0.0),
         1.0,
         Arc::clone(&mat2),
     )));
-    world.add(Box::new(Sphere::new(
+    world.add(Arc::new(Sphere::new(
         Vec3::new(4.0, 1.0, 0.0),
         1.0,
         Arc::clone(&mat3),
