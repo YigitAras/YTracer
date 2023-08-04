@@ -36,7 +36,8 @@ impl Hittable for HittableList {
         }
         hit_anything
     }
-    fn bounding_box(&mut self, time0: f64, time1: f64, output_box: &mut Aabb) -> bool {
+    // TODO: Rustify this part, currently it is C-like
+    fn bounding_box(self, time0: f64, time1: f64, output_box: &mut Aabb) -> bool {
         if self.objects.is_empty() {
             return false;
         }
@@ -44,7 +45,7 @@ impl Hittable for HittableList {
         let mut temp_box: Aabb = Default::default();
         let mut first_box = true;
 
-        for obj in self.objects.iter_mut() {
+        for obj in self.objects.iter() {
             if obj.bounding_box(time0, time1, &mut temp_box) {
                 return false;
             }

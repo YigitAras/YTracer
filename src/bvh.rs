@@ -2,6 +2,8 @@ use crate::aabb::*;
 use crate::hittable::*;
 use crate::hittable_list::*;
 
+use std::sync::Arc;
+
 type Link = Option<Box<BVHNode>>;
 
 pub struct BVHNode {
@@ -12,6 +14,7 @@ pub struct BVHNode {
 
 impl BVHNode {
     pub fn new(list: HittableList, start: u16, end: u16, time0: f64, tim1: f64) -> Self {
+        let list_copy = list;
         BVHNode {
             bbox: Default::default(),
             left: None,
@@ -42,8 +45,18 @@ impl Hittable for BVHNode {
         };
         final_hit
     }
-    fn bounding_box(&mut self, time0: f64, time1: f64, output_box: &mut crate::aabb::Aabb) -> bool {
+    fn bounding_box(self, time0: f64, time1: f64, output_box: &mut crate::aabb::Aabb) -> bool {
         *output_box = self.bbox;
         return true;
+    }
+}
+
+#[inline]
+fn box_compare(a: Box<dyn Hittable>, b: Box<dyn Hittable>, axis: i64) {
+    let mut box_a: Aabb = Default::default();
+    let mut box_b: Aabb = Default::default();
+
+    if a.bounding_box(0.0, 0.0, &mut box_a) || b.bounding_box(0.0, 0.0, &mut box_b) {
+        eprintln!("No bounding box in BVH_Node constructor!");
     }
 }
