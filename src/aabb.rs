@@ -21,6 +21,7 @@ impl Aabb {
     pub fn max(self) -> Vec3 {
         self.maximum
     }
+
     pub fn hit(self, r: Ray, t_range: std::ops::Range<f64>) -> bool {
         let inv_d = 1.0 / r.dir;
         let t0 = (self.minimum - r.orig) * inv_d;

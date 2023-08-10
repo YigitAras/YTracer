@@ -26,7 +26,7 @@ fn ray_color(r: Ray, world: &dyn Hittable, rng: &mut ThreadRng, depth: u64) -> V
         return Vec3::new(0.0, 0.0, 0.0);
     }
 
-    if let Some(hit) = world.hit(r, 0.00001, f64::MAX) {
+    if let Some(hit) = world.hit(r, 0.001, f64::MAX) {
         if let Some((scattered, attenuation)) = hit.mat_ptr.scatter(r, &hit) {
             return ray_color(scattered, world, rng, depth - 1) * attenuation;
         }
@@ -157,10 +157,12 @@ fn medium_world() -> HittableList {
 }
 
 fn main() {
+    /*
     rayon::ThreadPoolBuilder::new()
         .num_threads(1)
         .build_global()
         .unwrap();
+    */
     println!("Program started...\n");
     // Set number of threads
     // let mut rng = rand::thread_rng();
@@ -172,13 +174,13 @@ fn main() {
     const SAMPLES_PER_PIXEL: u64 = 500;
     const DEPTH: u64 = 50;
     // World
-    let world_big: HittableList = random_scene();
-    let world_med = medium_world();
+    let mut world_big: HittableList = random_scene();
+    let mut world_med = medium_world();
     /* BVH tree construction */
     let list_len = world_big.objects.len();
     let med_len = world_med.objects.len();
-    let world_big_tree = BVHNode::new(&world_big, 0, list_len, 0.0, 0.0);
-    let world_medium_tree = BVHNode::new(&world_med, 0, med_len, 0.0, 0.0);
+    let world_big_tree = BVHNode::new(&mut world_big, 0, list_len, 0.0, 0.0);
+    let world_medium_tree = BVHNode::new(&mut world_med, 0, med_len, 0.0, 0.0);
 
     /*
     let material_ground: Arc<dyn Material + Sync + Send> = Arc::new(Lambertian {
@@ -193,7 +195,6 @@ fn main() {
     let vup = Vec3::new(0.0, 1.0, 0.0);
     let dist_to_focus = 10.0;
 
-    /*
     // For the bigger world
     let cam = Camera::new(
         lookfrom,
@@ -204,8 +205,8 @@ fn main() {
         aperture,
         dist_to_focus,
     );
-    */
 
+    /*
     let cam = Camera::new(
         Vec3::new(-2.0, 2.0, 1.0),
         Vec3::new(0.0, 0.0, -1.0),
@@ -215,6 +216,7 @@ fn main() {
         aperture,
         dist_to_focus,
     );
+    */
 
     // File
     std::fs::create_dir_all("./outputs")
@@ -245,8 +247,7 @@ fn main() {
                         let u = (i as f64 + rng.gen::<f64>()) / IMAGE_WIDTH as f64;
                         let v = (j as f64 + rng.gen::<f64>()) / IMAGE_HEIGHT as f64;
                         let r = cam.get_ray(u, v);
-                        //col += ray_color(r, &world, &mut rng, DEPTH);
-                        col += ray_color(r, &world_medium_tree, &mut rng, DEPTH);
+                        col += ray_color(r, &world_big_tree, &mut rng, DEPTH);
                     }
                     col /= SAMPLES_PER_PIXEL as f64;
                     col = Vec3::new(f64::sqrt(col.x), f64::sqrt(col.y), f64::sqrt(col.z));

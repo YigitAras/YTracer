@@ -40,7 +40,7 @@ impl Hittable for HittableList {
         let mut first_box = true;
 
         for obj in self.objects.iter() {
-            if obj.bounding_box(time0, time1, &mut temp_box) {
+            if !obj.bounding_box(time0, time1, &mut temp_box) {
                 return false;
             }
             *output_box = if first_box {
@@ -48,7 +48,7 @@ impl Hittable for HittableList {
             } else {
                 output_box.surrounding_box(temp_box)
             };
-            first_box = true;
+            first_box = false;
         }
 
         return true;
