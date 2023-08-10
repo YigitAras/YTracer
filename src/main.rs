@@ -128,6 +128,8 @@ fn main() {
     const DEPTH: u64 = 50;
     // World
     let world: HittableList = random_scene();
+    /* BVH tree construction */
+    let world_tree = BVHNode::new(world, 0, world.objects.len(), 0.0, 0.0);
 
     /*
     let material_ground: Arc<dyn Material + Sync + Send> = Arc::new(Lambertian {
