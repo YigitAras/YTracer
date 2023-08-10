@@ -129,7 +129,8 @@ fn main() {
     // World
     let world: HittableList = random_scene();
     /* BVH tree construction */
-    let world_tree = BVHNode::new(world, 0, world.objects.len(), 0.0, 0.0);
+    let list_len = world.objects.len();
+    let world_tree = BVHNode::new(&world, 0, list_len, 0.0, 0.0);
 
     /*
     let material_ground: Arc<dyn Material + Sync + Send> = Arc::new(Lambertian {
@@ -183,7 +184,8 @@ fn main() {
                         let u = (i as f64 + rng.gen::<f64>()) / IMAGE_WIDTH as f64;
                         let v = (j as f64 + rng.gen::<f64>()) / IMAGE_HEIGHT as f64;
                         let r = cam.get_ray(u, v);
-                        col += ray_color(r, &world, &mut rng, DEPTH);
+                        //col += ray_color(r, &world, &mut rng, DEPTH);
+                        col += ray_color(r, &world_tree, &mut rng, DEPTH);
                     }
                     col /= SAMPLES_PER_PIXEL as f64;
                     col = Vec3::new(f64::sqrt(col.x), f64::sqrt(col.y), f64::sqrt(col.z));

@@ -17,7 +17,7 @@ pub struct BVHNode {
 }
 
 impl BVHNode {
-    pub fn new(list: HittableList, start: usize, end: usize, time0: f64, time1: f64) -> Self {
+    pub fn new(list: &HittableList, start: usize, end: usize, time0: f64, time1: f64) -> Self {
         
         let mut objects_copy = list.clone();
         let mut rng = rand::thread_rng();
@@ -56,8 +56,8 @@ impl BVHNode {
                 });
             // Integer division
             let mid = start + object_span / 2;
-            left_n = Some(Arc::new(BVHNode::new(objects_copy, start, mid, time0, time1)));
-            right_n = Some(Arc::new(BVHNode::new(objects_copy, mid, end, time0, time1)));
+            left_n = Some(Arc::new(BVHNode::new(&objects_copy, start, mid, time0, time1)));
+            right_n = Some(Arc::new(BVHNode::new(&objects_copy, mid, end, time0, time1)));
     
         }
 
