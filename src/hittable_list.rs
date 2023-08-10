@@ -1,13 +1,17 @@
 use std::default;
 use std::sync::Arc;
 
+use std::ops::{
+     Index, IndexMut
+};
+
 use crate::aabb::*;
 use crate::hittable::*;
 use crate::ray::*;
 
-#[derive(Default)]
+#[derive(Default, Clone)]
 pub struct HittableList {
-    objects: Vec<Arc<dyn Hittable>>,
+    pub objects: Vec<Arc<dyn Hittable>>,
 }
 
 impl HittableList {
@@ -38,7 +42,7 @@ impl Hittable for HittableList {
         hit_anything
     }
     // TODO: Rustify this part, currently it is C-like
-    fn bounding_box(self, time0: f64, time1: f64, output_box: &mut Aabb) -> bool {
+    fn bounding_box(& self, time0: f64, time1: f64, output_box: &mut Aabb) -> bool {
         if self.objects.is_empty() {
             return false;
         }
@@ -59,5 +63,20 @@ impl Hittable for HittableList {
         }
 
         return true;
+    }
+}
+
+impl Index<usize> for HittableList {
+    type Output = Arc<dyn Hittable>;
+    #[inline]
+    fn index<'a>(&'a self, i: usize) -> &'a Arc<dyn Hittable> {
+        &self.objects[i]
+    }
+}
+
+impl IndexMut<usize> for HittableList {
+    #[inline]
+    fn index_mut<'a>(&'a mut self, i: usize) -> &'a mut Arc<dyn Hittable> {
+        &mut self.objects[i]
     }
 }

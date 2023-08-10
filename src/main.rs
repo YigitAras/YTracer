@@ -133,41 +133,6 @@ fn main() {
     let material_ground: Arc<dyn Material + Sync + Send> = Arc::new(Lambertian {
         albedo: Vec3::new(0.8, 0.8, 0.0),
     });
-    let material_center: Arc<dyn Material + Sync + Send> = Arc::new(Lambertian {
-        albedo: Vec3::new(0.1, 0.2, 0.5),
-    });
-    let material_left: Arc<dyn Material + Sync + Send> = Arc::new(Dielectric { ir: 1.5 });
-    let material_right: Arc<dyn Material + Sync + Send> =
-        Arc::new(Metal::new(Vec3::new(0.8, 0.6, 0.2), 0.0));
-
-    world.add(Box::new(Sphere::new(
-        Vec3::new(0.0, -100.5, -1.0),
-        100.0,
-        Arc::clone(&material_ground),
-    )));
-    world.add(Box::new(Sphere::new(
-        Vec3::new(0.0, 0.0, -1.0),
-        0.5,
-        Arc::clone(&material_center),
-    )));
-    world.add(Box::new(Sphere::new(
-        Vec3::new(-1.0, 0.0, -1.0),
-        0.5,
-        // gotta clone the rc here if you want to reuse it later another time
-        Arc::clone(&material_left),
-    )));
-
-    world.add(Box::new(Sphere::new(
-        Vec3::new(-1.0, 0.0, -1.0),
-        -0.45,
-        Arc::clone(&material_left),
-    )));
-
-    world.add(Box::new(Sphere::new(
-        Vec3::new(1.0, 0.0, -1.0),
-        0.5,
-        Arc::clone(&material_right),
-    )));
     */
 
     // Camera
