@@ -1,12 +1,10 @@
-use rayon::prelude::IndexedParallelIterator;
-
 use crate::aabb::*;
 use crate::hittable::*;
 use crate::hittable_list::*;
 
+use rand::Rng;
 use std::cmp::Ordering;
 use std::sync::Arc;
-use rand::Rng;
 
 type Link = Option<Arc<dyn Hittable>>;
 
@@ -18,7 +16,6 @@ pub struct BVHNode {
 
 impl BVHNode {
     pub fn new(list: &HittableList, start: usize, end: usize, time0: f64, time1: f64) -> Self {
-        
         let mut objects_copy = list.clone();
         let mut rng = rand::thread_rng();
         let axis: u8 = rng.gen_range(0..=2);
@@ -32,39 +29,58 @@ impl BVHNode {
         };
 
         let object_span = end - start;
-        let mut left_n: Option<Arc<dyn Hittable>> = None;
-        let mut right_n: Option<Arc<dyn Hittable>> = None;
+        let left_n: Option<Arc<dyn Hittable>>;
+        let right_n: Option<Arc<dyn Hittable>>;
         if object_span == 1 {
-            left_n = Some(objects_copy[start]);
-            right_n = Some(objects_copy[start]);
+            left_n = Some(Arc::clone(&objects_copy[start]));
+            right_n = Some(Arc::clone(&objects_copy[start]));
         } else if object_span == 2 {
-            if comparator(&objects_copy[start], &objects_copy[start+1]) {
-                left_n = Some(objects_copy[start]);
-                right_n = Some(objects_copy[start+1]);
+            if comparator(&objects_copy[start], &objects_copy[start + 1]) {
+                left_n = Some(Arc::clone(&objects_copy[start]));
+                right_n = Some(Arc::clone(&objects_copy[start + 1]));
             } else {
-                left_n = Some(objects_copy[start+1]);
-                right_n = Some(objects_copy[start]);
+                left_n = Some(Arc::clone(&objects_copy[start + 1]));
+                right_n = Some(Arc::clone(&objects_copy[start]));
             }
         } else {
             /* TODO: Sort the iter+start - iter+end of the vector */
-            objects_copy.objects[start..end]
-            .sort_by(|a, b| 
-                if comparator(a,b) {
+            objects_copy.objects[start..end].sort_by(|a, b| {
+                if comparator(a, b) {
                     Ordering::Less
                 } else {
                     Ordering::Greater
-                });
+                }
+            });
             // Integer division
             let mid = start + object_span / 2;
-            left_n = Some(Arc::new(BVHNode::new(&objects_copy, start, mid, time0, time1)));
-            right_n = Some(Arc::new(BVHNode::new(&objects_copy, mid, end, time0, time1)));
-    
+            left_n = Some(Arc::new(BVHNode::new(
+                &objects_copy,
+                start,
+                mid,
+                time0,
+                time1,
+            )));
+            right_n = Some(Arc::new(BVHNode::new(
+                &objects_copy,
+                mid,
+                end,
+                time0,
+                time1,
+            )));
         }
 
-        let mut box_left:  Aabb = Default::default();
+        let mut box_left: Aabb = Default::default();
         let mut box_right: Aabb = Default::default();
 
-        if left_n.unwrap().bounding_box(0.0, 0.0, &mut box_left) || right_n.unwrap().bounding_box(0.0, 0.0, &mut box_right) {
+        if !left_n
+            .as_ref()
+            .unwrap()
+            .bounding_box(0.0, 0.0, &mut box_left)
+            || !right_n
+                .as_ref()
+                .unwrap()
+                .bounding_box(0.0, 0.0, &mut box_right)
+        {
             eprintln!("No bounding box in BVH_Node constructor!");
         }
 
@@ -81,6 +97,7 @@ impl BVHNode {
 impl Hittable for BVHNode {
     fn hit(&self, r: crate::ray::Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
         if !self.bbox.hit(r, t_min..t_max) {
+            eprintln!("Did not hit");
             return None;
         }
         // Check left and right hit
@@ -98,6 +115,9 @@ impl Hittable for BVHNode {
                 node.hit(r, t_min, furthest)
             }
         };
+        if let Some(_) = final_hit {
+            eprintln!("Well it did hit brudda");
+        }
         final_hit
     }
     fn bounding_box(&self, time0: f64, time1: f64, output_box: &mut Aabb) -> bool {
@@ -111,7 +131,7 @@ fn box_compare(a: &Arc<dyn Hittable>, b: &Arc<dyn Hittable>, axis: usize) -> boo
     let mut box_a: Aabb = Default::default();
     let mut box_b: Aabb = Default::default();
 
-    if a.bounding_box(0.0, 0.0, &mut box_a) || b.bounding_box(0.0, 0.0, &mut box_b) {
+    if !a.bounding_box(0.0, 0.0, &mut box_a) || !b.bounding_box(0.0, 0.0, &mut box_b) {
         eprintln!("No bounding box in BVH_Node comparator!");
     }
 
@@ -121,7 +141,7 @@ fn box_compare(a: &Arc<dyn Hittable>, b: &Arc<dyn Hittable>, axis: usize) -> boo
 #[inline]
 fn box_x_compare(a: &Arc<dyn Hittable>, b: &Arc<dyn Hittable>) -> bool {
     box_compare(a, b, 0)
-} 
+}
 
 #[inline]
 fn box_y_compare(a: &Arc<dyn Hittable>, b: &Arc<dyn Hittable>) -> bool {

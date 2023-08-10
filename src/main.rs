@@ -115,7 +115,52 @@ fn random_scene() -> HittableList {
     world
 }
 
+fn medium_world() -> HittableList {
+    let mut world: HittableList = Default::default();
+    let material_ground: Arc<dyn Material + Sync + Send> = Arc::new(Lambertian {
+        albedo: Vec3::new(0.8, 0.8, 0.0),
+    });
+    let material_center: Arc<dyn Material + Sync + Send> = Arc::new(Lambertian {
+        albedo: Vec3::new(0.1, 0.2, 0.5),
+    });
+    let material_left: Arc<dyn Material + Sync + Send> = Arc::new(Dielectric { ir: 1.5 });
+    let material_right: Arc<dyn Material + Sync + Send> = Arc::new(Metal {
+        albedo: Vec3::new(0.8, 0.6, 0.2),
+        fuzz: 0.0,
+    });
+    world.add(Arc::new(Sphere::new(
+        Vec3::new(0.0, -100.5, -1.0),
+        100.0,
+        Arc::clone(&material_ground),
+    )));
+    world.add(Arc::new(Sphere::new(
+        Vec3::new(0.0, 0.0, -1.0),
+        0.5,
+        Arc::clone(&material_center),
+    )));
+    world.add(Arc::new(Sphere::new(
+        Vec3::new(-1.0, 0.0, -1.0),
+        0.5,
+        Arc::clone(&material_left),
+    )));
+    world.add(Arc::new(Sphere::new(
+        Vec3::new(-1.0, 0.0, -1.0),
+        -0.45,
+        Arc::clone(&material_left),
+    )));
+    world.add(Arc::new(Sphere::new(
+        Vec3::new(1.0, 0.0, -1.0),
+        0.5,
+        Arc::clone(&material_right),
+    )));
+    world
+}
+
 fn main() {
+    rayon::ThreadPoolBuilder::new()
+        .num_threads(1)
+        .build_global()
+        .unwrap();
     println!("Program started...\n");
     // Set number of threads
     // let mut rng = rand::thread_rng();
@@ -127,10 +172,13 @@ fn main() {
     const SAMPLES_PER_PIXEL: u64 = 500;
     const DEPTH: u64 = 50;
     // World
-    let world: HittableList = random_scene();
+    let world_big: HittableList = random_scene();
+    let world_med = medium_world();
     /* BVH tree construction */
-    let list_len = world.objects.len();
-    let world_tree = BVHNode::new(&world, 0, list_len, 0.0, 0.0);
+    let list_len = world_big.objects.len();
+    let med_len = world_med.objects.len();
+    let world_big_tree = BVHNode::new(&world_big, 0, list_len, 0.0, 0.0);
+    let world_medium_tree = BVHNode::new(&world_med, 0, med_len, 0.0, 0.0);
 
     /*
     let material_ground: Arc<dyn Material + Sync + Send> = Arc::new(Lambertian {
@@ -145,11 +193,24 @@ fn main() {
     let vup = Vec3::new(0.0, 1.0, 0.0);
     let dist_to_focus = 10.0;
 
+    /*
+    // For the bigger world
     let cam = Camera::new(
         lookfrom,
         lookat,
         vup,
         20.0,
+        ASPECT_RATIO,
+        aperture,
+        dist_to_focus,
+    );
+    */
+
+    let cam = Camera::new(
+        Vec3::new(-2.0, 2.0, 1.0),
+        Vec3::new(0.0, 0.0, -1.0),
+        Vec3::new(0.0, 1.0, 0.0),
+        90.0,
         ASPECT_RATIO,
         aperture,
         dist_to_focus,
@@ -185,7 +246,7 @@ fn main() {
                         let v = (j as f64 + rng.gen::<f64>()) / IMAGE_HEIGHT as f64;
                         let r = cam.get_ray(u, v);
                         //col += ray_color(r, &world, &mut rng, DEPTH);
-                        col += ray_color(r, &world_tree, &mut rng, DEPTH);
+                        col += ray_color(r, &world_medium_tree, &mut rng, DEPTH);
                     }
                     col /= SAMPLES_PER_PIXEL as f64;
                     col = Vec3::new(f64::sqrt(col.x), f64::sqrt(col.y), f64::sqrt(col.z));

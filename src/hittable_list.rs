@@ -1,9 +1,6 @@
-use std::default;
 use std::sync::Arc;
 
-use std::ops::{
-     Index, IndexMut
-};
+use std::ops::{Index, IndexMut};
 
 use crate::aabb::*;
 use crate::hittable::*;
@@ -15,16 +12,8 @@ pub struct HittableList {
 }
 
 impl HittableList {
-    pub fn clear(&mut self) {
-        self.objects.clear();
-    }
     pub fn add(&mut self, object: Arc<dyn Hittable>) {
         self.objects.push(object);
-    }
-    pub fn new() -> Self {
-        Self {
-            objects: Vec::new(),
-        }
     }
 }
 
@@ -42,7 +31,7 @@ impl Hittable for HittableList {
         hit_anything
     }
     // TODO: Rustify this part, currently it is C-like
-    fn bounding_box(& self, time0: f64, time1: f64, output_box: &mut Aabb) -> bool {
+    fn bounding_box(&self, time0: f64, time1: f64, output_box: &mut Aabb) -> bool {
         if self.objects.is_empty() {
             return false;
         }
