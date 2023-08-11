@@ -51,7 +51,7 @@ impl Hittable for HittableList {
             first_box = false;
         }
 
-        return true;
+        true
     }
 }
 

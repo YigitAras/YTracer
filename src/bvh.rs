@@ -7,10 +7,7 @@ use std::cmp::Ordering;
 use std::sync::Arc;
 
 enum BVHNode {
-    Branch {
-        left: Arc<BVHNode>,
-        right: Arc<BVHNode>,
-    },
+    Branch { left: Arc<BVH>, right: Arc<BVH> },
     Left(Arc<dyn Hittable>),
 }
 
@@ -29,8 +26,8 @@ impl BVH {
     ) -> Self {
         //let mut objects_copy = list.clone();
         let mut rng = rand::thread_rng();
-        let axis: u8 = rng.gen_range(0..=2);
-
+        let axis: usize = rng.gen_range(0..=2);
+        let object_span = end - start;
         let comparator: fn(&Arc<dyn Hittable>, &Arc<dyn Hittable>) -> Ordering = if axis == 0 {
             box_x_compare
         } else if axis == 1 {
@@ -38,11 +35,38 @@ impl BVH {
         } else {
             box_z_compare
         };
+        // Sort the objects
+        objects_copy.objects[start..end].sort_unstable_by(comparator);
 
-        let object_span = end - start;
-        BVH {
-            bbox: Default::default(),
-            tree: None,
+        let len = objects_copy.objects[start..end].len();
+
+        match len {
+            0 => panic!["No elements in scene!"],
+            1 => {
+                let leaf = Arc::clone(&objects_copy.objects[start]);
+                let mut tmp_bbox: Aabb = Default::default();
+                if leaf.bounding_box(time0, time1, &mut tmp_bbox) {
+                    BVH {
+                        tree: BVHNode::Left(leaf),
+                        bbox: tmp_bbox,
+                    }
+                } else {
+                    panic!["No bounding box in BVH Node"]
+                }
+            }
+            _ => {
+                let mid = start + object_span / 2;
+                let left = BVH::new(objects_copy, start, mid, time0, time1);
+                let right = BVH::new(objects_copy, mid, end, time0, time1);
+                let tmp_bbox = left.bbox.surrounding_box(right.bbox);
+                BVH {
+                    tree: BVHNode::Branch {
+                        left: Arc::new(left),
+                        right: Arc::new(right),
+                    },
+                    bbox: tmp_bbox,
+                }
+            }
         }
     }
 }
@@ -51,14 +75,14 @@ impl Hittable for BVH {
     fn hit(&self, r: crate::ray::Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
         if self.bbox.hit(r, t_min..t_max) {
             match &self.tree {
-                BVHNode::Left(leaf) => None,
-                BVHNode::Branch {left, right} => None,
+                BVHNode::Left(_leaf) => None,
+                BVHNode::Branch { left: _, right: _ } => None,
             }
         } else {
             None
         }
     }
-    fn bounding_box(&self, time0: f64, time1: f64, output_box: &mut Aabb) -> bool {
+    fn bounding_box(&self, _time0: f64, _time1: f64, output_box: &mut Aabb) -> bool {
         *output_box = self.bbox;
         true
     }
