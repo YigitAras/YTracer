@@ -15,20 +15,6 @@ pub struct BVHNode {
 }
 
 impl BVHNode {
-    fn axis_range(objs: &HittableList, axis: usize) -> f64 {
-        let range = objs
-            .objects
-            .iter()
-            .fold(std::f64::MAX..std::f64::MIN, |range, o| {
-                let mut bb: Aabb = Default::default();
-                o.bounding_box(0.0, 0.0, &mut bb);
-                let min = bb.minimum[axis].min(bb.maximum[axis]);
-                let max = bb.minimum[axis].max(bb.maximum[axis]);
-                range.start.min(min)..range.end.max(max)
-            });
-        range.end - range.start
-    }
-
     pub fn new(
         objects_copy: &mut HittableList,
         start: usize,
@@ -190,6 +176,7 @@ impl Hittable for BVHNode {
     fn hit(&self, r: crate::ray::Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
         if self.bbox.hit(r, t_min..t_max) {
             // Technically putting the same element twice to each leaf node...
+            // So this is the default item that appears on leaves
             match (self.left.as_ref(), self.right.as_ref()) {
                 (Some(node_l), Some(node_r)) => {
                     let hit_left = node_l.hit(r, t_min, t_max);
@@ -232,11 +219,7 @@ fn box_compare(a: &Arc<dyn Hittable>, b: &Arc<dyn Hittable>, axis: usize) -> Ord
         eprintln!("No bounding box in BVH_Node comparator!");
     }
 
-    if let Some(ord) = box_a.min()[axis].partial_cmp(&box_b.min()[axis]) {
-        ord
-    } else {
-        Ordering::Greater
-    }
+    box_a.min()[axis].partial_cmp(&box_b.min()[axis]).unwrap()
 }
 
 #[inline]
