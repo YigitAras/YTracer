@@ -249,7 +249,7 @@ fn main() {
                         let u = (i as f64 + rng.gen::<f64>()) / IMAGE_WIDTH as f64;
                         let v = (j as f64 + rng.gen::<f64>()) / IMAGE_HEIGHT as f64;
                         let r = cam.get_ray(u, v);
-                        col += ray_color(r, &world_med, &mut rng, DEPTH);
+                        col += ray_color(r, &_world_big_tree, &mut rng, DEPTH);
                     }
                     col /= SAMPLES_PER_PIXEL as f64;
                     col = Vec3::new(f64::sqrt(col.x), f64::sqrt(col.y), f64::sqrt(col.z));
@@ -262,7 +262,7 @@ fn main() {
         })
         .collect();
 
-    println!("Now writing the values into the PPM file...\n");
+    println!("\nNow writing the values into the PPM file...\n");
     for r in rows {
         for col in r {
             let ir = col.x as u64;

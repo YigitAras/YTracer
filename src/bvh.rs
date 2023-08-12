@@ -1,6 +1,7 @@
 use crate::aabb::*;
 use crate::hittable::*;
 use crate::hittable_list::*;
+use crate::ray::*;
 
 use rand::Rng;
 use std::cmp::Ordering;
@@ -8,7 +9,7 @@ use std::sync::Arc;
 
 enum BVHNode {
     Branch { left: Arc<BVH>, right: Arc<BVH> },
-    Left(Arc<dyn Hittable>),
+    Leaf(Arc<dyn Hittable>),
 }
 
 pub struct BVH {
@@ -38,16 +39,16 @@ impl BVH {
         // Sort the objects
         objects_copy.objects[start..end].sort_unstable_by(comparator);
 
-        let len = objects_copy.objects[start..end].len();
+        let size = objects_copy.objects[start..end].len();
 
-        match len {
+        match size {
             0 => panic!["No elements in scene!"],
             1 => {
                 let leaf = Arc::clone(&objects_copy.objects[start]);
                 let mut tmp_bbox: Aabb = Default::default();
                 if leaf.bounding_box(time0, time1, &mut tmp_bbox) {
                     BVH {
-                        tree: BVHNode::Left(leaf),
+                        tree: BVHNode::Leaf(leaf),
                         bbox: tmp_bbox,
                     }
                 } else {
@@ -72,11 +73,17 @@ impl BVH {
 }
 
 impl Hittable for BVH {
-    fn hit(&self, r: crate::ray::Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
+    fn hit(&self, r: Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
         if self.bbox.hit(r, t_min..t_max) {
             match &self.tree {
-                BVHNode::Left(_leaf) => None,
-                BVHNode::Branch { left: _, right: _ } => None,
+                BVHNode::Leaf(leaf) => leaf.hit(r, t_min, t_max),
+                BVHNode::Branch { left, right } => {
+                    let mut temp_t_max = t_max;
+                    let left = left.hit(r, t_min, t_max);
+                    if let Some(l) = &left{temp_t_max = l.t};
+                    let right  = right.hit(r, t_min, temp_t_max);
+                    if right.is_some() { right } else { left }
+                },
             }
         } else {
             None

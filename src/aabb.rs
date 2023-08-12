@@ -18,6 +18,7 @@ impl Aabb {
         }
     }
 
+    #[warn(dead_code)]
     pub fn max(self) -> Vec3 {
         self.maximum
     }
