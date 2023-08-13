@@ -160,10 +160,10 @@ fn medium_world() -> HittableList {
 
 fn main() {
     // IF DEBUG:
-    rayon::ThreadPoolBuilder::new()
-        .num_threads(1)
-        .build_global()
-        .unwrap();
+    // rayon::ThreadPoolBuilder::new()
+    //     .num_threads(1)
+    //     .build_global()
+    //     .unwrap();
 
     println!("Program started...\n");
     // Set number of threads

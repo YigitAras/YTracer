@@ -18,6 +18,7 @@ pub struct BVH {
 }
 
 impl BVH {
+    
     pub fn new(
         objects_copy: &mut HittableList,
         start: usize,
