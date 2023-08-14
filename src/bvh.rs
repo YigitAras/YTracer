@@ -3,7 +3,6 @@ use crate::hittable::*;
 use crate::hittable_list::*;
 use crate::ray::*;
 
-use rand::Rng;
 use std::cmp::Ordering;
 use std::sync::Arc;
 
@@ -16,9 +15,31 @@ pub struct BVH {
     bbox: Aabb,
     tree: BVHNode,
 }
-
+// TODO: Make sure the ranges time0..time1 are forwarded properly when implemented
 impl BVH {
-    
+
+    #[inline]
+    fn axisSelection(objs: &[Arc<dyn Hittable>]) -> usize {
+        fn axis_range(objs: &[Arc<dyn Hittable>], axis: usize) -> f64 {
+            let range = objs.iter().fold(f64::MAX..f64::MIN, |range, o| {
+                let mut bb: Aabb = Default::default();
+                o.bounding_box(0.0, 0.0 , &mut bb);
+                let min = bb.minimum[axis].min(bb.maximum[axis]);
+                let max = bb.minimum[axis].max(bb.maximum[axis]);
+                range.start.min(min)..range.end.max(max)
+            });
+            range.end - range.start
+        }
+        {
+            let mut ranges = [
+                (0, axis_range(objs, 0)),
+                (1, axis_range(objs, 0)),
+                (2, axis_range(objs, 0))
+            ];
+            ranges.sort_unstable_by(|a, b| b.1.partial_cmp(&a.1).unwrap());
+            ranges[0].0
+        }
+    }
     pub fn new(
         objects_copy: &mut HittableList,
         start: usize,
@@ -26,17 +47,21 @@ impl BVH {
         time0: f64,
         time1: f64,
     ) -> Self {
-        //let mut objects_copy = list.clone();
-        let mut rng = rand::thread_rng();
-        let axis: usize = rng.gen_range(0..=2);
         let object_span = end - start;
-        let comparator: fn(&Arc<dyn Hittable>, &Arc<dyn Hittable>) -> Ordering = if axis == 0 {
-            box_x_compare
-        } else if axis == 1 {
-            box_y_compare
-        } else {
-            box_z_compare
+        // Make sure only the slice of data that is being used is looked up for axis
+        let axis = BVH::axisSelection(&objects_copy.objects[start..end]);
+
+        // Better axis selection for separation
+        let comparator = |a: &Arc<dyn Hittable>, b: &Arc<dyn Hittable>| {
+            let mut abb: Aabb = Default::default();
+            let mut bbb: Aabb = Default::default();
+            a.bounding_box(0.0, 0.0, &mut abb);
+            a.bounding_box(0.0, 0.0, &mut bbb);
+            let av = abb.minimum[axis] + abb.maximum[axis];
+            let bv = bbb.minimum[axis] + bbb.maximum[axis];
+            av.partial_cmp(&bv).unwrap()
         };
+
         // Sort the objects
         objects_copy.objects[start..end].sort_unstable_by(comparator);
 
@@ -94,31 +119,4 @@ impl Hittable for BVH {
         *output_box = self.bbox;
         true
     }
-}
-
-#[inline]
-fn box_compare(a: &Arc<dyn Hittable>, b: &Arc<dyn Hittable>, axis: usize) -> Ordering {
-    let mut box_a: Aabb = Default::default();
-    let mut box_b: Aabb = Default::default();
-
-    if !a.bounding_box(0.0, 0.0, &mut box_a) || !b.bounding_box(0.0, 0.0, &mut box_b) {
-        eprintln!("No bounding box in BVH_Node comparator!");
-    }
-
-    box_a.min()[axis].partial_cmp(&box_b.min()[axis]).unwrap()
-}
-
-#[inline]
-fn box_x_compare(a: &Arc<dyn Hittable>, b: &Arc<dyn Hittable>) -> Ordering {
-    box_compare(a, b, 0)
-}
-
-#[inline]
-fn box_y_compare(a: &Arc<dyn Hittable>, b: &Arc<dyn Hittable>) -> Ordering {
-    box_compare(a, b, 1)
-}
-
-#[inline]
-fn box_z_compare(a: &Arc<dyn Hittable>, b: &Arc<dyn Hittable>) -> Ordering {
-    box_compare(a, b, 2)
 }
