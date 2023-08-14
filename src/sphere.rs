@@ -58,11 +58,11 @@ impl Hittable for Sphere {
     }
 
     // TODO: Rustify this part, currently it is C-like
-    fn bounding_box(&self, time0: f64, time1: f64, output_box: &mut Aabb) -> bool {
+    fn bounding_box(&self, _time0: f64, _time1: f64, output_box: &mut Aabb) -> bool {
         *output_box = Aabb {
             minimum: self.center - Vec3::new(self.radius, self.radius, self.radius),
             maximum: self.center + Vec3::new(self.radius, self.radius, self.radius),
         };
-        return true;
+        true
     }
 }

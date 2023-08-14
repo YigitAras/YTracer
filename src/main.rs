@@ -22,12 +22,14 @@ use crate::{
 };
 
 fn ray_color(r: Ray, world: &dyn Hittable, rng: &mut ThreadRng, depth: u64) -> Vec3 {
-    if depth <= 0 {
+    if depth == 0 {
         return Vec3::new(0.0, 0.0, 0.0);
     }
 
     if let Some(hit) = world.hit(r, 0.001, f64::MAX) {
+        // eprintln!("We do hit something and will try scattering");
         if let Some((scattered, attenuation)) = hit.mat_ptr.scatter(r, &hit) {
+            // eprintln!("We do hit something and get some color");
             return ray_color(scattered, world, rng, depth - 1) * attenuation;
         }
         return Vec3::new(0.0, 0.0, 0.0);
@@ -157,12 +159,12 @@ fn medium_world() -> HittableList {
 }
 
 fn main() {
-    /*
-    rayon::ThreadPoolBuilder::new()
-        .num_threads(1)
-        .build_global()
-        .unwrap();
-    */
+    // IF DEBUG:
+    // rayon::ThreadPoolBuilder::new()
+    //     .num_threads(1)
+    //     .build_global()
+    //     .unwrap();
+
     println!("Program started...\n");
     // Set number of threads
     // let mut rng = rand::thread_rng();
@@ -179,8 +181,8 @@ fn main() {
     /* BVH tree construction */
     let list_len = world_big.objects.len();
     let med_len = world_med.objects.len();
-    let world_big_tree = BVHNode::new(&mut world_big, 0, list_len, 0.0, 0.0);
-    let world_medium_tree = BVHNode::new(&mut world_med, 0, med_len, 0.0, 0.0);
+    let _world_big_tree = BVH::new(&mut world_big, 0, list_len, 0.0, 0.0);
+    let _world_medium_tree = BVH::new(&mut world_med, 0, med_len, 0.0, 0.0);
 
     /*
     let material_ground: Arc<dyn Material + Sync + Send> = Arc::new(Lambertian {
@@ -247,7 +249,7 @@ fn main() {
                         let u = (i as f64 + rng.gen::<f64>()) / IMAGE_WIDTH as f64;
                         let v = (j as f64 + rng.gen::<f64>()) / IMAGE_HEIGHT as f64;
                         let r = cam.get_ray(u, v);
-                        col += ray_color(r, &world_big_tree, &mut rng, DEPTH);
+                        col += ray_color(r, &_world_big_tree, &mut rng, DEPTH);
                     }
                     col /= SAMPLES_PER_PIXEL as f64;
                     col = Vec3::new(f64::sqrt(col.x), f64::sqrt(col.y), f64::sqrt(col.z));
@@ -260,7 +262,7 @@ fn main() {
         })
         .collect();
 
-    println!("Now writing the values into the PPM file...\n");
+    println!("\nNow writing the values into the PPM file...\n");
     for r in rows {
         for col in r {
             let ir = col.x as u64;
