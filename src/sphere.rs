@@ -21,7 +21,7 @@ impl Sphere {
             mat_ptr,
         }
     }
-    pub fn getSphereUV(point: Vec3) {}
+    pub fn get_sphere_uv(_: Vec3) {}
 }
 
 impl Hittable for Sphere {
