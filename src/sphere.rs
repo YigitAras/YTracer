@@ -1,10 +1,10 @@
+use std::sync::Arc;
+
 use crate::aabb::*;
 use crate::hittable::*;
 use crate::material::*;
 use crate::ray::*;
 use crate::vector3::*;
-
-use std::sync::Arc;
 
 #[derive(Clone)]
 pub struct Sphere {
@@ -21,6 +21,7 @@ impl Sphere {
             mat_ptr,
         }
     }
+    pub fn getSphereUV(point: Vec3) {}
 }
 
 impl Hittable for Sphere {
