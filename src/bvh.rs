@@ -19,7 +19,7 @@ pub struct BVH {
 impl BVH {
 
     #[inline]
-    fn axisSelection(objs: &[Arc<dyn Hittable>]) -> usize {
+    fn axis_selection(objs: &[Arc<dyn Hittable>]) -> usize {
         fn axis_range(objs: &[Arc<dyn Hittable>], axis: usize) -> f64 {
             let range = objs.iter().fold(f64::MAX..f64::MIN, |range, o| {
                 let mut bb: Aabb = Default::default();
@@ -49,7 +49,7 @@ impl BVH {
     ) -> Self {
         let object_span = end - start;
         // Make sure only the slice of data that is being used is looked up for axis
-        let axis = BVH::axisSelection(&objects_copy.objects[start..end]);
+        let axis = BVH::axis_selection(&objects_copy.objects[start..end]);
 
         // Better axis selection for separation
         let comparator = |a: &Arc<dyn Hittable>, b: &Arc<dyn Hittable>| {

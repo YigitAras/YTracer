@@ -9,6 +9,8 @@ pub struct HitRecord {
     pub p: Vec3,
     pub normal: Vec3,
     pub mat_ptr: Arc<dyn Material + Sync + Send>,
+    pub u: f64,
+    pub v: f64,  // U and V for texture values
     pub t: f64,
 }
 
@@ -23,6 +25,8 @@ impl HitRecord {
             p: point,
             normal,
             mat_ptr,
+            u: 0.0,
+            v: 0.0,  //TODO: for now place holder values for U&V
             t,
         }
     }

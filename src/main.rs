@@ -15,10 +15,11 @@ mod ray;
 mod sphere;
 mod utils;
 mod vector3;
+mod texture;
 
 use crate::{
     bvh::*, camera::*, hittable::*, hittable_list::*, material::*, ray::*, sphere::*, utils::*,
-    vector3::*,
+    vector3::*, texture::*
 };
 
 fn ray_color(r: Ray, world: &dyn Hittable, rng: &mut ThreadRng, depth: u64) -> Vec3 {
