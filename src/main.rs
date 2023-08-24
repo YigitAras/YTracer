@@ -1,9 +1,15 @@
+use std::sync::Arc;
+use std::{fs::OpenOptions, io::BufWriter, io::Write};
+
 use kdam::tqdm;
 use rand::rngs::ThreadRng;
 use rand::Rng;
 use rayon::prelude::*;
-use std::sync::Arc;
-use std::{fs::OpenOptions, io::BufWriter, io::Write};
+
+use crate::{
+    bvh::*, camera::*, hittable::*, hittable_list::*, material::*, ray::*, sphere::*, texture::*,
+    utils::*, vector3::*,
+};
 
 mod aabb;
 mod bvh;
@@ -13,14 +19,9 @@ mod hittable_list;
 mod material;
 mod ray;
 mod sphere;
+mod texture;
 mod utils;
 mod vector3;
-mod texture;
-
-use crate::{
-    bvh::*, camera::*, hittable::*, hittable_list::*, material::*, ray::*, sphere::*, utils::*,
-    vector3::*, texture::*
-};
 
 fn ray_color(r: Ray, world: &dyn Hittable, rng: &mut ThreadRng, depth: u64) -> Vec3 {
     if depth == 0 {
@@ -270,7 +271,7 @@ fn main() {
             let ig = col.y as u64;
             let ib = col.z as u64;
             let tmp_data: String = format!("{ir} {ig} {ib}\n");
-            file.write(tmp_data.as_bytes())
+            file.write_all(tmp_data.as_bytes())
                 .expect("Failed to write line of pixel data...");
         }
     }

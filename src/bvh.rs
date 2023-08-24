@@ -1,10 +1,9 @@
+use std::sync::Arc;
+
 use crate::aabb::*;
 use crate::hittable::*;
 use crate::hittable_list::*;
 use crate::ray::*;
-
-use std::cmp::Ordering;
-use std::sync::Arc;
 
 enum BVHNode {
     Branch { left: Arc<BVH>, right: Arc<BVH> },
@@ -17,13 +16,12 @@ pub struct BVH {
 }
 // TODO: Make sure the ranges time0..time1 are forwarded properly when implemented
 impl BVH {
-
     #[inline]
     fn axis_selection(objs: &[Arc<dyn Hittable>]) -> usize {
         fn axis_range(objs: &[Arc<dyn Hittable>], axis: usize) -> f64 {
             let range = objs.iter().fold(f64::MAX..f64::MIN, |range, o| {
                 let mut bb: Aabb = Default::default();
-                o.bounding_box(0.0, 0.0 , &mut bb);
+                o.bounding_box(0.0, 0.0, &mut bb);
                 let min = bb.minimum[axis].min(bb.maximum[axis]);
                 let max = bb.minimum[axis].max(bb.maximum[axis]);
                 range.start.min(min)..range.end.max(max)
@@ -34,7 +32,7 @@ impl BVH {
             let mut ranges = [
                 (0, axis_range(objs, 0)),
                 (1, axis_range(objs, 0)),
-                (2, axis_range(objs, 0))
+                (2, axis_range(objs, 0)),
             ];
             ranges.sort_unstable_by(|a, b| b.1.partial_cmp(&a.1).unwrap());
             ranges[0].0
@@ -106,10 +104,16 @@ impl Hittable for BVH {
                 BVHNode::Branch { left, right } => {
                     let mut temp_t_max = t_max;
                     let left = left.hit(r, t_min, t_max);
-                    if let Some(l) = &left{temp_t_max = l.t};
-                    let right  = right.hit(r, t_min, temp_t_max);
-                    if right.is_some() { right } else { left }
-                },
+                    if let Some(l) = &left {
+                        temp_t_max = l.t
+                    };
+                    let right = right.hit(r, t_min, temp_t_max);
+                    if right.is_some() {
+                        right
+                    } else {
+                        left
+                    }
+                }
             }
         } else {
             None
