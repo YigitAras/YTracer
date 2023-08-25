@@ -7,8 +7,8 @@ use rand::Rng;
 use rayon::prelude::*;
 
 use crate::{
-    bvh::*, camera::*, hittable::*, hittable_list::*, material::*, ray::*, sphere::*, texture::*,
-    utils::*, vector3::*,
+    bvh::*, camera::*, hittable::*, hittable_list::*, material::*, ray::*, sphere::*, utils::*,
+    vector3::*,
 };
 
 mod aabb;
@@ -183,8 +183,8 @@ fn main() {
     /* BVH tree construction */
     let list_len = world_big.objects.len();
     let med_len = world_med.objects.len();
-    let _world_big_tree = BVH::new(&mut world_big, 0, list_len, 0.0, 0.0);
-    let _world_medium_tree = BVH::new(&mut world_med, 0, med_len, 0.0, 0.0);
+    let _world_big_tree = Bvh::new(&mut world_big, 0, list_len, 0.0, 0.0);
+    let _world_medium_tree = Bvh::new(&mut world_med, 0, med_len, 0.0, 0.0);
 
     /*
     let material_ground: Arc<dyn Material + Sync + Send> = Arc::new(Lambertian {

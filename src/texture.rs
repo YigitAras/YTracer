@@ -4,18 +4,16 @@ pub trait Texture: Sync + Send {
 }
 
 pub struct SolidColor {
-    color_value: Vec3
+    color_value: Vec3,
 }
 
 impl SolidColor {
     pub fn new(c: Vec3) -> Self {
-        Self {
-            color_value: c
-        }
+        Self { color_value: c }
     }
     pub fn from_color(red: f64, green: f64, blue: f64) -> Self {
         Self {
-            color_value: Vec3::new(red, green, blue)
+            color_value: Vec3::new(red, green, blue),
         }
     }
 }

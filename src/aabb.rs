@@ -7,6 +7,7 @@ pub struct Aabb {
 }
 
 impl Aabb {
+    #[allow(dead_code)]
     pub fn min(self) -> Vec3 {
         self.minimum
     }
@@ -17,8 +18,7 @@ impl Aabb {
             maximum: self.maximum.zip_with(other.maximum, f64::max),
         }
     }
-
-    #[warn(dead_code)]
+    #[allow(dead_code)]
     pub fn max(self) -> Vec3 {
         self.maximum
     }

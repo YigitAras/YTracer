@@ -6,16 +6,16 @@ use crate::hittable_list::*;
 use crate::ray::*;
 
 enum BVHNode {
-    Branch { left: Arc<BVH>, right: Arc<BVH> },
+    Branch { left: Arc<Bvh>, right: Arc<Bvh> },
     Leaf(Arc<dyn Hittable>),
 }
 
-pub struct BVH {
+pub struct Bvh {
     bbox: Aabb,
     tree: BVHNode,
 }
 // TODO: Make sure the ranges time0..time1 are forwarded properly when implemented
-impl BVH {
+impl Bvh {
     #[inline]
     fn axis_selection(objs: &[Arc<dyn Hittable>]) -> usize {
         fn axis_range(objs: &[Arc<dyn Hittable>], axis: usize) -> f64 {
@@ -47,14 +47,14 @@ impl BVH {
     ) -> Self {
         let object_span = end - start;
         // Make sure only the slice of data that is being used is looked up for axis
-        let axis = BVH::axis_selection(&objects_copy.objects[start..end]);
+        let axis = Bvh::axis_selection(&objects_copy.objects[start..end]);
 
         // Better axis selection for separation
         let comparator = |a: &Arc<dyn Hittable>, b: &Arc<dyn Hittable>| {
             let mut abb: Aabb = Default::default();
             let mut bbb: Aabb = Default::default();
             a.bounding_box(0.0, 0.0, &mut abb);
-            a.bounding_box(0.0, 0.0, &mut bbb);
+            b.bounding_box(0.0, 0.0, &mut bbb);
             let av = abb.minimum[axis] + abb.maximum[axis];
             let bv = bbb.minimum[axis] + bbb.maximum[axis];
             av.partial_cmp(&bv).unwrap()
@@ -71,7 +71,7 @@ impl BVH {
                 let leaf = Arc::clone(&objects_copy.objects[start]);
                 let mut tmp_bbox: Aabb = Default::default();
                 if leaf.bounding_box(time0, time1, &mut tmp_bbox) {
-                    BVH {
+                    Bvh {
                         tree: BVHNode::Leaf(leaf),
                         bbox: tmp_bbox,
                     }
@@ -81,10 +81,10 @@ impl BVH {
             }
             _ => {
                 let mid = start + object_span / 2;
-                let left = BVH::new(objects_copy, start, mid, time0, time1);
-                let right = BVH::new(objects_copy, mid, end, time0, time1);
+                let left = Bvh::new(objects_copy, start, mid, time0, time1);
+                let right = Bvh::new(objects_copy, mid, end, time0, time1);
                 let tmp_bbox = left.bbox.surrounding_box(right.bbox);
-                BVH {
+                Bvh {
                     tree: BVHNode::Branch {
                         left: Arc::new(left),
                         right: Arc::new(right),
@@ -96,7 +96,7 @@ impl BVH {
     }
 }
 
-impl Hittable for BVH {
+impl Hittable for Bvh {
     fn hit(&self, r: Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
         if self.bbox.hit(r, t_min..t_max) {
             match &self.tree {

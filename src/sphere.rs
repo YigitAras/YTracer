@@ -21,7 +21,8 @@ impl Sphere {
             mat_ptr,
         }
     }
-    pub fn get_sphere_uv(p: Vec3) -> (f64, f64) {
+    #[inline]
+    pub fn get_uv(p: Vec3) -> (f64, f64) {
         // p: a given point on the sphere of radius one, centered at the origin.
         // u: returned value [0,1] of angle around the Y axis from X=-1
         // v: returned value [0,1] of angle from Y=-1 to Y=+1
@@ -58,12 +59,12 @@ impl Hittable for Sphere {
         if discriminant < 0.0 {
             return None;
         }
-        let sqrtd = discriminant.sqrt();
+        let sqrt_disc = discriminant.sqrt();
 
         // Find the nearest root that lies in the acceptable range
-        let mut root = (-half_b - sqrtd) / a;
+        let mut root = (-half_b - sqrt_disc) / a;
         if root < t_min || t_max < root {
-            root = (-half_b + sqrtd) / a;
+            root = (-half_b + sqrt_disc) / a;
             if root < t_min || t_max < root {
                 return None;
             }
@@ -72,11 +73,14 @@ impl Hittable for Sphere {
         let t_temp = root;
         let p_temp = r.at(t_temp);
         let normal = (p_temp - self.center) / self.radius;
+        let (u, v) = Sphere::get_uv(normal);
 
         Some(HitRecord::new(
             p_temp,
             normal,
             t_temp,
+            u,
+            v,
             Arc::clone(&self.mat_ptr),
         ))
     }

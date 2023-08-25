@@ -58,14 +58,14 @@ impl Hittable for HittableList {
 impl Index<usize> for HittableList {
     type Output = Arc<dyn Hittable>;
     #[inline]
-    fn index<'a>(&'a self, i: usize) -> &'a Arc<dyn Hittable> {
+    fn index(&self, i: usize) -> &Arc<dyn Hittable> {
         &self.objects[i]
     }
 }
 
 impl IndexMut<usize> for HittableList {
     #[inline]
-    fn index_mut<'a>(&'a mut self, i: usize) -> &'a mut Arc<dyn Hittable> {
+    fn index_mut(&mut self, i: usize) -> &mut Arc<dyn Hittable> {
         &mut self.objects[i]
     }
 }

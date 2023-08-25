@@ -70,12 +70,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "dyn-clone"
-version = "1.0.12"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "304e6508efa593091e97a9abbc10f90aa7ca635b6d2784feff3c89d41dd12272"
-
-[[package]]
 name = "either"
 version = "1.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -132,12 +126,12 @@ dependencies = [
 
 [[package]]
 name = "kdam"
-version = "0.3.0"
+version = "0.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "333c30a42347fd0f02d948465848f50116854855c9fc7e77e98f3dd31fc73190"
+checksum = "eec124c5ef865373afd03f7900161495339c59cef395a6dc45d025bcd6499b0b"
 dependencies = [
  "terminal_size",
- "unicode-segmentation",
+ "windows-sys",
 ]
 
 [[package]]
@@ -247,7 +241,6 @@ dependencies = [
 name = "rustracer"
 version = "0.1.0"
 dependencies = [
- "dyn-clone",
  "kdam",
  "rand",
  "rayon",
@@ -268,12 +261,6 @@ dependencies = [
  "rustix",
  "windows-sys",
 ]
-
-[[package]]
-name = "unicode-segmentation"
-version = "1.10.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1dd624098567895118886609431a7c3b8f516e41d30e0643f03d94592a147e36"
 
 [[package]]
 name = "wasi"
