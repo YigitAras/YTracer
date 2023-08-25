@@ -1,10 +1,11 @@
+use rand::Rng;
+use std::sync::Arc;
+
 use crate::hittable::*;
 use crate::ray::*;
-
+use crate::texture::*;
 use crate::vector3::*;
 
-// use dyn_clone::*;
-use rand::Rng;
 
 fn random_in_unit_sphere() -> Vec3 {
     let mut rng = rand::thread_rng();
@@ -39,11 +40,10 @@ pub trait Material {
     fn scatter(&self, r_in: Ray, hit: &HitRecord) -> Option<(Ray, Vec3)>;
 }
 
-// dyn_clone::clone_trait_object!(Material);
 
-#[derive(Clone, Copy)]
+#[derive(Clone)]
 pub struct Lambertian {
-    pub albedo: Vec3,
+    pub albedo: Arc<dyn Texture + Send + Sync>,
 }
 
 #[derive(Clone, Copy)]
@@ -57,7 +57,22 @@ pub struct Dielectric {
     pub ir: f64,
 }
 
+impl Lambertian {
+    pub fn from_color(c: Vec3) -> Self {
+        Self {
+            albedo: Arc::new(SolidColor::new(c))
+        }
+    }
+    #[allow(dead_code)]
+    pub fn from_texture(tex: Arc<dyn Texture + Send + Sync>) -> Self {
+        Self {
+            albedo: Arc::clone(&tex)
+        }
+    }
+}
+
 impl Metal {
+    #[allow(dead_code)]
     pub fn new(a: Vec3, f: f64) -> Self {
         Self {
             albedo: a,
@@ -75,7 +90,7 @@ impl Material for Lambertian {
         }
 
         let scattered = Ray::new(hit.p, scatter_dir);
-        let attenuation = self.albedo;
+        let attenuation = self.albedo.value(hit.u, hit.v ,hit.p);
         Some((scattered, attenuation))
     }
 }

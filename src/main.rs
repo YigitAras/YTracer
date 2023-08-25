@@ -2,7 +2,6 @@ use std::sync::Arc;
 use std::{fs::OpenOptions, io::BufWriter, io::Write};
 
 use kdam::tqdm;
-use rand::rngs::ThreadRng;
 use rand::Rng;
 use rayon::prelude::*;
 
@@ -23,7 +22,7 @@ mod texture;
 mod utils;
 mod vector3;
 
-fn ray_color(r: Ray, world: &dyn Hittable, rng: &mut ThreadRng, depth: u64) -> Vec3 {
+fn ray_color(r: Ray, world: &dyn Hittable, depth: u64) -> Vec3 {
     if depth == 0 {
         return Vec3::new(0.0, 0.0, 0.0);
     }
@@ -32,7 +31,7 @@ fn ray_color(r: Ray, world: &dyn Hittable, rng: &mut ThreadRng, depth: u64) -> V
         // eprintln!("We do hit something and will try scattering");
         if let Some((scattered, attenuation)) = hit.mat_ptr.scatter(r, &hit) {
             // eprintln!("We do hit something and get some color");
-            return ray_color(scattered, world, rng, depth - 1) * attenuation;
+            return ray_color(scattered, world, depth - 1) * attenuation;
         }
         return Vec3::new(0.0, 0.0, 0.0);
     }
@@ -53,9 +52,9 @@ fn random_vec(l: f64, h: f64) -> Vec3 {
 fn random_scene() -> HittableList {
     let mut rng = rand::thread_rng();
     let mut world: HittableList = Default::default();
-    let material_ground: Arc<dyn Material + Sync + Send> = Arc::new(Lambertian {
-        albedo: Vec3::new(0.5, 0.5, 0.5),
-    });
+    let material_ground: Arc<dyn Material + Sync + Send> =
+        Arc::new(Lambertian::from_color(Vec3::new(0.5, 0.5, 0.5)));
+
     world.add(Arc::new(Sphere::new(
         Vec3::new(0.0, -1000.0, 0.0),
         1000.0,
@@ -74,7 +73,7 @@ fn random_scene() -> HittableList {
                     // diffuse
                     let albedo = random_vec(0.0, 1.0) * random_vec(0.0, 1.0);
                     let sphere_mat: Arc<dyn Material + Sync + Send> =
-                        Arc::new(Lambertian { albedo });
+                        Arc::new(Lambertian::from_color ( albedo ));
                     world.add(Arc::new(Sphere::new(center, 0.2, Arc::clone(&sphere_mat))));
                 } else if choose_mat < 0.95 {
                     // metal
@@ -93,9 +92,9 @@ fn random_scene() -> HittableList {
         }
     }
     let mat1: Arc<dyn Material + Sync + Send> = Arc::new(Dielectric { ir: 1.5 });
-    let mat2: Arc<dyn Material + Sync + Send> = Arc::new(Lambertian {
-        albedo: Vec3::new(0.4, 0.2, 0.1),
-    });
+    let mat2: Arc<dyn Material + Sync + Send> = Arc::new(Lambertian::from_color(
+        Vec3::new(0.4, 0.2, 0.1),
+    ));
     let mat3: Arc<dyn Material + Sync + Send> = Arc::new(Metal {
         albedo: Vec3::new(0.7, 0.6, 0.5),
         fuzz: 0.0,
@@ -121,12 +120,12 @@ fn random_scene() -> HittableList {
 
 fn medium_world() -> HittableList {
     let mut world: HittableList = Default::default();
-    let material_ground: Arc<dyn Material + Sync + Send> = Arc::new(Lambertian {
-        albedo: Vec3::new(0.8, 0.8, 0.0),
-    });
-    let material_center: Arc<dyn Material + Sync + Send> = Arc::new(Lambertian {
-        albedo: Vec3::new(0.1, 0.2, 0.5),
-    });
+    let material_ground: Arc<dyn Material + Sync + Send> = Arc::new(Lambertian::from_color(
+        Vec3::new(0.8, 0.8, 0.0),
+    ));
+    let material_center: Arc<dyn Material + Sync + Send> = Arc::new(Lambertian::from_color(
+        Vec3::new(0.1, 0.2, 0.5),
+    ));
     let material_left: Arc<dyn Material + Sync + Send> = Arc::new(Dielectric { ir: 1.5 });
     let material_right: Arc<dyn Material + Sync + Send> = Arc::new(Metal {
         albedo: Vec3::new(0.8, 0.6, 0.2),
@@ -251,7 +250,7 @@ fn main() {
                         let u = (i as f64 + rng.gen::<f64>()) / IMAGE_WIDTH as f64;
                         let v = (j as f64 + rng.gen::<f64>()) / IMAGE_HEIGHT as f64;
                         let r = cam.get_ray(u, v);
-                        col += ray_color(r, &_world_big_tree, &mut rng, DEPTH);
+                        col += ray_color(r, &_world_big_tree, DEPTH);
                     }
                     col /= SAMPLES_PER_PIXEL as f64;
                     col = Vec3::new(f64::sqrt(col.x), f64::sqrt(col.y), f64::sqrt(col.z));
