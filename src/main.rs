@@ -7,8 +7,9 @@ use rayon::prelude::*;
 
 use crate::{
     bvh::*, camera::*, hittable::*, hittable_list::*, material::*, ray::*, sphere::*, utils::*,
-    vector3::*,
+    vector3::*, texture::*
 };
+use crate::texture::CheckerTexture;
 
 mod aabb;
 mod bvh;
@@ -21,6 +22,7 @@ mod sphere;
 mod texture;
 mod utils;
 mod vector3;
+mod perlin;
 
 fn ray_color(r: Ray, world: &dyn Hittable, depth: u64) -> Vec3 {
     if depth == 0 {
@@ -52,8 +54,11 @@ fn random_vec(l: f64, h: f64) -> Vec3 {
 fn random_scene() -> HittableList {
     let mut rng = rand::thread_rng();
     let mut world: HittableList = Default::default();
+    let checker: Arc<dyn Texture + Sync + Send> = Arc::new(
+    CheckerTexture::from_color(Vec3::new(0.2,0.3,0.1), Vec3::new(0.9,0.9,0.9)));
+
     let material_ground: Arc<dyn Material + Sync + Send> =
-        Arc::new(Lambertian::from_color(Vec3::new(0.5, 0.5, 0.5)));
+        Arc::new(Lambertian::from_texture(Arc::clone(&checker)));
 
     world.add(Arc::new(Sphere::new(
         Vec3::new(0.0, -1000.0, 0.0),
@@ -118,43 +123,22 @@ fn random_scene() -> HittableList {
     world
 }
 
-fn medium_world() -> HittableList {
+
+fn checker_world() -> HittableList {
     let mut world: HittableList = Default::default();
-    let material_ground: Arc<dyn Material + Sync + Send> = Arc::new(Lambertian::from_color(
-        Vec3::new(0.8, 0.8, 0.0),
-    ));
-    let material_center: Arc<dyn Material + Sync + Send> = Arc::new(Lambertian::from_color(
-        Vec3::new(0.1, 0.2, 0.5),
-    ));
-    let material_left: Arc<dyn Material + Sync + Send> = Arc::new(Dielectric { ir: 1.5 });
-    let material_right: Arc<dyn Material + Sync + Send> = Arc::new(Metal {
-        albedo: Vec3::new(0.8, 0.6, 0.2),
-        fuzz: 0.0,
-    });
+    let checker: Arc<dyn Texture + Sync + Send> = Arc::new(
+        CheckerTexture::from_color(Vec3::new(0.2,0.3,0.1), Vec3::new(0.9,0.9,0.9)));
+    let mat_checker: Arc<dyn Material + Sync + Send> = Arc::new(Lambertian::from_texture(
+        checker));
     world.add(Arc::new(Sphere::new(
-        Vec3::new(0.0, -100.5, -1.0),
-        100.0,
-        Arc::clone(&material_ground),
+        Vec3::new(0.0, -10.0, 0.0),
+        10.0,
+        Arc::clone(&mat_checker),
     )));
     world.add(Arc::new(Sphere::new(
-        Vec3::new(0.0, 0.0, -1.0),
-        0.5,
-        Arc::clone(&material_center),
-    )));
-    world.add(Arc::new(Sphere::new(
-        Vec3::new(-1.0, 0.0, -1.0),
-        0.5,
-        Arc::clone(&material_left),
-    )));
-    world.add(Arc::new(Sphere::new(
-        Vec3::new(-1.0, 0.0, -1.0),
-        -0.45,
-        Arc::clone(&material_left),
-    )));
-    world.add(Arc::new(Sphere::new(
-        Vec3::new(1.0, 0.0, -1.0),
-        0.5,
-        Arc::clone(&material_right),
+        Vec3::new(0.0, 10.0, 0.0),
+        10.0,
+        Arc::clone(&mat_checker),
     )));
     world
 }
@@ -177,25 +161,42 @@ fn main() {
     const SAMPLES_PER_PIXEL: u64 = 500;
     const DEPTH: u64 = 50;
     // World
-    let mut world_big: HittableList = random_scene();
-    let mut world_med = medium_world();
+    let world: Bvh;
     /* BVH tree construction */
-    let list_len = world_big.objects.len();
-    let med_len = world_med.objects.len();
-    let _world_big_tree = Bvh::new(&mut world_big, 0, list_len, 0.0, 0.0);
-    let _world_medium_tree = Bvh::new(&mut world_med, 0, med_len, 0.0, 0.0);
+    // let list_len = world_big.objects.len();
+    // let _world_big_tree = Bvh::new(&mut world_big, 0, list_len, 0.0, 0.0);
 
-    /*
-    let material_ground: Arc<dyn Material + Sync + Send> = Arc::new(Lambertian {
-        albedo: Vec3::new(0.8, 0.8, 0.0),
-    });
-    */
+    let lookfrom: Vec3;
+    let lookat: Vec3;
+    let vfov: f64;
+    let mut aperture = 0.0;
 
-    // Camera
-    let aperture = 0.1;
-    let lookfrom = Vec3::new(13.0, 2.0, 3.0);
-    let lookat = Vec3::new(0.0, 0.0, 0.0);
-    let vup = Vec3::new(0.0, 1.0, 0.0);
+    // Select World to Render
+    let scene_id = 1;
+    match scene_id {
+        0 => {
+            let mut items = random_scene();
+            let list_len = items.objects.len();
+            world = Bvh::new(&mut items,0, list_len, 0.0, 0.0 );
+            lookfrom = Vec3::new(13.0,2.0,3.0);
+            lookat = Vec3::new(0.0,0.0,0.0);
+            vfov = 20.0;
+            aperture = 0.1;
+        },
+        1 => {
+            let mut items = checker_world();
+            let list_len = items.objects.len();
+            world = Bvh::new(&mut items, 0, list_len, 0.0, 0.0);
+            lookfrom = Vec3::new(13.0,2.0,3.0);
+            lookat = Vec3::new(0.0,0.0,0.0);
+            vfov = 20.0;
+        },
+        _ => {
+            !unimplemented!()
+        }
+    }
+
+    let vup = Vec3::new(0.0,1.0,0.0);
     let dist_to_focus = 10.0;
 
     // For the bigger world
@@ -203,23 +204,12 @@ fn main() {
         lookfrom,
         lookat,
         vup,
-        20.0,
+        vfov,
         ASPECT_RATIO,
         aperture,
         dist_to_focus,
     );
 
-    /*
-    let cam = Camera::new(
-        Vec3::new(-2.0, 2.0, 1.0),
-        Vec3::new(0.0, 0.0, -1.0),
-        Vec3::new(0.0, 1.0, 0.0),
-        90.0,
-        ASPECT_RATIO,
-        aperture,
-        dist_to_focus,
-    );
-    */
 
     // File
     std::fs::create_dir_all("./outputs")
@@ -250,7 +240,7 @@ fn main() {
                         let u = (i as f64 + rng.gen::<f64>()) / IMAGE_WIDTH as f64;
                         let v = (j as f64 + rng.gen::<f64>()) / IMAGE_HEIGHT as f64;
                         let r = cam.get_ray(u, v);
-                        col += ray_color(r, &_world_big_tree, DEPTH);
+                        col += ray_color(r, &world, DEPTH);
                     }
                     col /= SAMPLES_PER_PIXEL as f64;
                     col = Vec3::new(f64::sqrt(col.x), f64::sqrt(col.y), f64::sqrt(col.z));

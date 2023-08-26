@@ -50,6 +50,12 @@ impl CheckerTexture{
 
 impl Texture for CheckerTexture {
     fn value(&self, u: f64, v: f64, point: Vec3) -> Vec3 {
-        todo!()
+        // let sines = sin(10*p.x())*sin(10*p.y())*sin(10*p.z());
+        let sines = f64::sin(10.0*point.x) * f64::sin(10.0 * point.y) * f64::sin(10.0 * point.z);
+        if sines < 0.0 {
+            self.odd.value(u, v, point)
+        } else {
+            self.even.value(u, v, point)
+        }
     }
 }
