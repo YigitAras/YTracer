@@ -1,6 +1,8 @@
 use std::sync::Arc;
 
+use crate::perlin::*;
 use crate::vector3::*;
+
 pub trait Texture: Sync + Send {
     fn value(&self, u: f64, v: f64, point: Vec3) -> Vec3;
 }
@@ -33,17 +35,14 @@ pub struct CheckerTexture {
     even: Arc<dyn Texture>,
 }
 
-impl CheckerTexture{
-    pub fn from_tex(even: Arc<dyn Texture>, odd: Arc<dyn Texture>) -> Self{
-        Self {
-            odd,
-            even
-        }
+impl CheckerTexture {
+    pub fn from_tex(even: Arc<dyn Texture>, odd: Arc<dyn Texture>) -> Self {
+        Self { odd, even }
     }
     pub fn from_color(c1: Vec3, c2: Vec3) -> Self {
         Self {
             odd: Arc::new(SolidColor::new(c1)),
-            even: Arc::new(SolidColor::new(c2))
+            even: Arc::new(SolidColor::new(c2)),
         }
     }
 }
@@ -51,11 +50,29 @@ impl CheckerTexture{
 impl Texture for CheckerTexture {
     fn value(&self, u: f64, v: f64, point: Vec3) -> Vec3 {
         // let sines = sin(10*p.x())*sin(10*p.y())*sin(10*p.z());
-        let sines = f64::sin(10.0*point.x) * f64::sin(10.0 * point.y) * f64::sin(10.0 * point.z);
+        let sines = f64::sin(10.0 * point.x) * f64::sin(10.0 * point.y) * f64::sin(10.0 * point.z);
         if sines < 0.0 {
             self.odd.value(u, v, point)
         } else {
             self.even.value(u, v, point)
         }
+    }
+}
+
+pub struct NoiseTexture {
+    pub noise: Perlin,
+}
+
+impl NoiseTexture {
+    pub fn new() -> Self {
+        Self {
+            noise: Perlin::new(),
+        }
+    }
+}
+
+impl Texture for NoiseTexture {
+    fn value(&self, _: f64, _: f64, point: Vec3) -> Vec3 {
+        Vec3::new(1.0, 1.0, 1.0) * self.noise.noise(point)
     }
 }

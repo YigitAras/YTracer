@@ -5,11 +5,11 @@ use kdam::tqdm;
 use rand::Rng;
 use rayon::prelude::*;
 
-use crate::{
-    bvh::*, camera::*, hittable::*, hittable_list::*, material::*, ray::*, sphere::*, utils::*,
-    vector3::*, texture::*
-};
 use crate::texture::CheckerTexture;
+use crate::{
+    bvh::*, camera::*, hittable::*, hittable_list::*, material::*, ray::*, sphere::*, texture::*,
+    utils::*, vector3::*,
+};
 
 mod aabb;
 mod bvh;
@@ -17,12 +17,12 @@ mod camera;
 mod hittable;
 mod hittable_list;
 mod material;
+mod perlin;
 mod ray;
 mod sphere;
 mod texture;
 mod utils;
 mod vector3;
-mod perlin;
 
 fn ray_color(r: Ray, world: &dyn Hittable, depth: u64) -> Vec3 {
     if depth == 0 {
@@ -54,8 +54,10 @@ fn random_vec(l: f64, h: f64) -> Vec3 {
 fn random_scene() -> HittableList {
     let mut rng = rand::thread_rng();
     let mut world: HittableList = Default::default();
-    let checker: Arc<dyn Texture + Sync + Send> = Arc::new(
-    CheckerTexture::from_color(Vec3::new(0.2,0.3,0.1), Vec3::new(0.9,0.9,0.9)));
+    let checker: Arc<dyn Texture + Sync + Send> = Arc::new(CheckerTexture::from_color(
+        Vec3::new(0.2, 0.3, 0.1),
+        Vec3::new(0.9, 0.9, 0.9),
+    ));
 
     let material_ground: Arc<dyn Material + Sync + Send> =
         Arc::new(Lambertian::from_texture(Arc::clone(&checker)));
@@ -78,7 +80,7 @@ fn random_scene() -> HittableList {
                     // diffuse
                     let albedo = random_vec(0.0, 1.0) * random_vec(0.0, 1.0);
                     let sphere_mat: Arc<dyn Material + Sync + Send> =
-                        Arc::new(Lambertian::from_color ( albedo ));
+                        Arc::new(Lambertian::from_color(albedo));
                     world.add(Arc::new(Sphere::new(center, 0.2, Arc::clone(&sphere_mat))));
                 } else if choose_mat < 0.95 {
                     // metal
@@ -97,9 +99,8 @@ fn random_scene() -> HittableList {
         }
     }
     let mat1: Arc<dyn Material + Sync + Send> = Arc::new(Dielectric { ir: 1.5 });
-    let mat2: Arc<dyn Material + Sync + Send> = Arc::new(Lambertian::from_color(
-        Vec3::new(0.4, 0.2, 0.1),
-    ));
+    let mat2: Arc<dyn Material + Sync + Send> =
+        Arc::new(Lambertian::from_color(Vec3::new(0.4, 0.2, 0.1)));
     let mat3: Arc<dyn Material + Sync + Send> = Arc::new(Metal {
         albedo: Vec3::new(0.7, 0.6, 0.5),
         fuzz: 0.0,
@@ -123,13 +124,13 @@ fn random_scene() -> HittableList {
     world
 }
 
-
 fn checker_world() -> HittableList {
     let mut world: HittableList = Default::default();
-    let checker: Arc<dyn Texture + Sync + Send> = Arc::new(
-        CheckerTexture::from_color(Vec3::new(0.2,0.3,0.1), Vec3::new(0.9,0.9,0.9)));
-    let mat_checker: Arc<dyn Material + Sync + Send> = Arc::new(Lambertian::from_texture(
-        checker));
+    let checker: Arc<dyn Texture + Sync + Send> = Arc::new(CheckerTexture::from_color(
+        Vec3::new(0.2, 0.3, 0.1),
+        Vec3::new(0.9, 0.9, 0.9),
+    ));
+    let mat_checker: Arc<dyn Material + Sync + Send> = Arc::new(Lambertian::from_texture(checker));
     world.add(Arc::new(Sphere::new(
         Vec3::new(0.0, -10.0, 0.0),
         10.0,
@@ -143,6 +144,24 @@ fn checker_world() -> HittableList {
     world
 }
 
+fn two_perlin_spheres() -> HittableList {
+    let mut world: HittableList = Default::default();
+    let pertext: Arc<dyn Texture + Sync + Send> = Arc::new(NoiseTexture::new());
+    let mat_perlin: Arc<dyn Material + Sync + Send> = Arc::new(Lambertian::from_texture(pertext));
+    world.add(Arc::new(Sphere::new(
+        Vec3::new(0.0, -1000.0, 0.0),
+        1000.0,
+        Arc::clone(&mat_perlin),
+    )));
+
+    world.add(Arc::new(Sphere::new(
+        Vec3::new(0.0, 2.0, 0.0),
+        2.0,
+        Arc::clone(&mat_perlin),
+    )));
+
+    world
+}
 fn main() {
     // IF DEBUG:
     // rayon::ThreadPoolBuilder::new()
@@ -172,31 +191,37 @@ fn main() {
     let mut aperture = 0.0;
 
     // Select World to Render
-    let scene_id = 1;
+    let scene_id = 2;
     match scene_id {
         0 => {
             let mut items = random_scene();
             let list_len = items.objects.len();
-            world = Bvh::new(&mut items,0, list_len, 0.0, 0.0 );
-            lookfrom = Vec3::new(13.0,2.0,3.0);
-            lookat = Vec3::new(0.0,0.0,0.0);
+            world = Bvh::new(&mut items, 0, list_len, 0.0, 0.0);
+            lookfrom = Vec3::new(13.0, 2.0, 3.0);
+            lookat = Vec3::new(0.0, 0.0, 0.0);
             vfov = 20.0;
             aperture = 0.1;
-        },
+        }
         1 => {
             let mut items = checker_world();
             let list_len = items.objects.len();
             world = Bvh::new(&mut items, 0, list_len, 0.0, 0.0);
-            lookfrom = Vec3::new(13.0,2.0,3.0);
-            lookat = Vec3::new(0.0,0.0,0.0);
+            lookfrom = Vec3::new(13.0, 2.0, 3.0);
+            lookat = Vec3::new(0.0, 0.0, 0.0);
             vfov = 20.0;
-        },
-        _ => {
-            !unimplemented!()
         }
+        2 => {
+            let mut items = two_perlin_spheres();
+            let list_len = items.objects.len();
+            world = Bvh::new(&mut items, 0, list_len, 0.0, 0.0);
+            lookfrom = Vec3::new(13.0, 2.0, 3.0);
+            lookat = Vec3::new(0.0, 0.0, 0.0);
+            vfov = 20.0;
+        }
+        _ => !unimplemented!(),
     }
 
-    let vup = Vec3::new(0.0,1.0,0.0);
+    let vup = Vec3::new(0.0, 1.0, 0.0);
     let dist_to_focus = 10.0;
 
     // For the bigger world
@@ -209,7 +234,6 @@ fn main() {
         aperture,
         dist_to_focus,
     );
-
 
     // File
     std::fs::create_dir_all("./outputs")

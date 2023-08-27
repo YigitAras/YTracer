@@ -4,13 +4,12 @@
 use crate::vector3::*;
 
 use rand::Rng;
-use rand::rngs::ThreadRng;
 
 pub struct Perlin {
     rand_floats: Vec<f64>,
     perm_x: Vec<i64>,
     perm_y: Vec<i64>,
-    perm_z: Vec<i64>
+    perm_z: Vec<i64>,
 }
 
 impl Perlin {
@@ -21,21 +20,36 @@ impl Perlin {
     }
 
     pub fn new() -> Self {
-        unimplemented!()
+        let mut rng = rand::thread_rng();
+        let mut rand_floats = vec![0.0; Perlin::point_count()];
+        for i in 0..Perlin::point_count() {
+            rand_floats[i] = rng.gen_range(0.0..1.0);
+        }
+        let perm_x = Perlin::perlin_generate_perm();
+        let perm_y = Perlin::perlin_generate_perm();
+        let perm_z = Perlin::perlin_generate_perm();
+
+        Self {
+            rand_floats,
+            perm_x,
+            perm_y,
+            perm_z,
+        }
     }
 
-    pub fn noise(&self, p: Vec3) -> f64{
+    pub fn noise(&self, p: Vec3) -> f64 {
         let i = ((4.0 * p.x) as i64) & 255;
         let j = ((4.0 * p.y) as i64) & 255;
         let k = ((4.0 * p.z) as i64) & 255;
 
-        self.rand_floats[self.perm_x[i as usize] ^ self.perm_y[j as usize] ^ self.perm_z[k as usize]]
+        self.rand_floats
+            [(self.perm_x[i as usize] ^ self.perm_y[j as usize] ^ self.perm_z[k as usize]) as usize]
     }
 
     // TODO: Rustify the loop?
     fn permute(p: &mut [i64], n: usize) {
         let mut rng = rand::thread_rng();
-        for i in  (1..n).rev() {
+        for i in (1..n).rev() {
             let target: usize = rng.gen_range(0..i);
             // Todo: Not sure of this operation
             p.swap(i, target);
