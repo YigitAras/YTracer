@@ -146,7 +146,7 @@ fn checker_world() -> HittableList {
 
 fn two_perlin_spheres() -> HittableList {
     let mut world: HittableList = Default::default();
-    let pertext: Arc<dyn Texture + Sync + Send> = Arc::new(NoiseTexture::new());
+    let pertext: Arc<dyn Texture + Sync + Send> = Arc::new(NoiseTexture::new(4.0));
     let mat_perlin: Arc<dyn Material + Sync + Send> = Arc::new(Lambertian::from_texture(pertext));
     world.add(Arc::new(Sphere::new(
         Vec3::new(0.0, -1000.0, 0.0),
