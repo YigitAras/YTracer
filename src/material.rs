@@ -1,22 +1,9 @@
 use rand::Rng;
 use std::sync::Arc;
 
-use crate::hittable::*;
-use crate::ray::*;
-use crate::texture::*;
-use crate::vector3::*;
+use crate::{hittable::*, ray::*, texture::*, utils::*, vector3::*};
 
-fn random_in_unit_sphere() -> Vec3 {
-    let mut rng = rand::thread_rng();
-    let unit = Vec3::new(1.0, 1.0, 1.0);
-    loop {
-        let p = Vec3::new(rng.gen::<f64>(), rng.gen::<f64>(), rng.gen::<f64>()) * 2.0 - unit;
-        if p.lenght_squared() < 1.0 {
-            return p;
-        }
-    }
-}
-
+// Light reflection/refraction related utilities
 fn reflect(v: Vec3, n: Vec3) -> Vec3 {
     v - n * v.dot(n) * 2.0
 }
@@ -44,17 +31,6 @@ pub struct Lambertian {
     pub albedo: Arc<dyn Texture + Send + Sync>,
 }
 
-#[derive(Clone, Copy)]
-pub struct Metal {
-    pub albedo: Vec3,
-    pub fuzz: f64,
-}
-
-#[derive(Clone, Copy)]
-pub struct Dielectric {
-    pub ir: f64,
-}
-
 impl Lambertian {
     pub fn from_color(c: Vec3) -> Self {
         Self {
@@ -65,16 +41,6 @@ impl Lambertian {
     pub fn from_texture(tex: Arc<dyn Texture + Send + Sync>) -> Self {
         Self {
             albedo: Arc::clone(&tex),
-        }
-    }
-}
-
-impl Metal {
-    #[allow(dead_code)]
-    pub fn new(a: Vec3, f: f64) -> Self {
-        Self {
-            albedo: a,
-            fuzz: if f < 1.0 { f } else { 1.0 },
         }
     }
 }
@@ -93,6 +59,21 @@ impl Material for Lambertian {
     }
 }
 
+#[derive(Clone, Copy)]
+pub struct Metal {
+    pub albedo: Vec3,
+    pub fuzz: f64,
+}
+impl Metal {
+    #[allow(dead_code)]
+    pub fn new(a: Vec3, f: f64) -> Self {
+        Self {
+            albedo: a,
+            fuzz: if f < 1.0 { f } else { 1.0 },
+        }
+    }
+}
+
 impl Material for Metal {
     fn scatter(&self, r_in: Ray, hit: &HitRecord) -> Option<(Ray, Vec3)> {
         let reflected =
@@ -106,6 +87,11 @@ impl Material for Metal {
             None
         }
     }
+}
+
+#[derive(Clone, Copy)]
+pub struct Dielectric {
+    pub ir: f64,
 }
 
 impl Material for Dielectric {
