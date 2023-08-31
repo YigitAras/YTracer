@@ -24,6 +24,7 @@ fn reflectance(cosine: f64, ref_idx: f64) -> f64 {
 pub trait Material {
     //: DynClone {
     fn scatter(&self, r_in: Ray, hit: &HitRecord) -> Option<(Ray, Vec3)>;
+    fn emitted(&self, u: f64, v: f64, point: Vec3) -> Vec3;
 }
 
 #[derive(Clone)]
@@ -57,6 +58,10 @@ impl Material for Lambertian {
         let attenuation = self.albedo.value(hit.u, hit.v, hit.p);
         Some((scattered, attenuation))
     }
+    // Lambertian does not emit light
+    fn emitted(&self, _: f64, _: f64, _: Vec3) -> Vec3 {
+        Vec3::new(0.0, 0.0, 0.0)
+    }
 }
 
 #[derive(Clone, Copy)]
@@ -86,6 +91,10 @@ impl Material for Metal {
         } else {
             None
         }
+    }
+    // Metal does not emit any light
+    fn emitted(&self, _: f64, _: f64, _: Vec3) -> Vec3 {
+        Vec3::new(0.0, 0.0, 0.0)
     }
 }
 
@@ -120,4 +129,12 @@ impl Material for Dielectric {
         let scattered = Ray::new(hit.p, direction);
         Some((scattered, attenuation))
     }
+    // Dielectric does not emit any light
+    fn emitted(&self, _: f64, _: f64, _: Vec3) -> Vec3 {
+        Vec3::new(0.0, 0.0, 0.0)
+    }
+}
+
+pub struct DiffuseLight {
+    emit: Arc<dyn Texture>,
 }

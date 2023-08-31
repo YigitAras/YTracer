@@ -24,23 +24,24 @@ mod texture;
 mod utils;
 mod vector3;
 
-fn ray_color(r: Ray, world: &dyn Hittable, depth: u64) -> Vec3 {
+fn ray_color(r: Ray, background: Vec3, world: &dyn Hittable, depth: u64) -> Vec3 {
+    // Depth limit reached don't accumulate any more light
     if depth == 0 {
         return Vec3::new(0.0, 0.0, 0.0);
     }
 
     if let Some(hit) = world.hit(r, 0.001, f64::MAX) {
-        // eprintln!("We do hit something and will try scattering");
+        let emitted = hit.mat_ptr.emitted(hit.u, hit.v, hit.p);
         if let Some((scattered, attenuation)) = hit.mat_ptr.scatter(r, &hit) {
             // eprintln!("We do hit something and get some color");
-            return ray_color(scattered, world, depth - 1) * attenuation;
+            emitted + ray_color(scattered, background, world, depth - 1) * attenuation
+        } else {
+            emitted
         }
-        return Vec3::new(0.0, 0.0, 0.0);
+    } else {
+        // If not hit anything
+        background
     }
-
-    let unit_direction = Vec3::unit_vector(r.dir);
-    let t = 0.5 * (unit_direction.y + 1.0);
-    Vec3::new(1.0, 1.0, 1.0) * (1.0 - t) + Vec3::new(0.5, 0.7, 1.0) * t
 }
 
 fn random_scene() -> HittableList {
@@ -154,6 +155,26 @@ fn two_perlin_spheres() -> HittableList {
 
     world
 }
+
+fn earth_scene() -> HittableList {
+    let mut world: HittableList = Default::default();
+    let image = image::open("static/moon.jpg")
+        .expect("image not found")
+        .to_rgb8();
+    let (width, height) = image.dimensions();
+    let data = image.into_raw();
+    let texture: Arc<dyn Texture + Sync + Send> =
+        Arc::new(ImageTexture::new(data, width as u64, height as u64));
+    let mat_world: Arc<dyn Material + Sync + Send> = Arc::new(Lambertian::from_texture(texture));
+    world.add(Arc::new(Sphere::new(
+        Vec3::new(0.0, 0.0, 0.0),
+        2.0,
+        Arc::clone(&mat_world),
+    )));
+
+    world
+}
+
 fn main() {
     // IF DEBUG:
     // rayon::ThreadPoolBuilder::new()
@@ -173,46 +194,51 @@ fn main() {
     const DEPTH: u64 = 50;
     // World
     let world: Bvh;
-    /* BVH tree construction */
-    // let list_len = world_big.objects.len();
-    // let _world_big_tree = Bvh::new(&mut world_big, 0, list_len, 0.0, 0.0);
 
     let lookfrom: Vec3;
     let lookat: Vec3;
     let vfov: f64;
     let mut aperture = 0.0;
+    let mut background = Vec3::new(0.0, 0.0, 0.0);
 
     // Select World to Render
-    let scene_id = 2;
+    let scene_id = 3;
+    let mut items: HittableList;
     match scene_id {
         0 => {
-            let mut items = random_scene();
-            let list_len = items.objects.len();
-            world = Bvh::new(&mut items, 0, list_len, 0.0, 0.0);
+            items = random_scene();
+            background = Vec3::new(0.70, 0.80, 1.00);
             lookfrom = Vec3::new(13.0, 2.0, 3.0);
             lookat = Vec3::new(0.0, 0.0, 0.0);
             vfov = 20.0;
             aperture = 0.1;
         }
         1 => {
-            let mut items = checker_world();
-            let list_len = items.objects.len();
-            world = Bvh::new(&mut items, 0, list_len, 0.0, 0.0);
+            items = checker_world();
+            background = Vec3::new(0.70, 0.80, 1.00);
             lookfrom = Vec3::new(13.0, 2.0, 3.0);
             lookat = Vec3::new(0.0, 0.0, 0.0);
             vfov = 20.0;
         }
         2 => {
-            let mut items = two_perlin_spheres();
-            let list_len = items.objects.len();
-            world = Bvh::new(&mut items, 0, list_len, 0.0, 0.0);
+            items = two_perlin_spheres();
+            background = Vec3::new(0.70, 0.80, 1.00);
             lookfrom = Vec3::new(13.0, 2.0, 3.0);
             lookat = Vec3::new(0.0, 0.0, 0.0);
             vfov = 20.0;
         }
-        _ => !unimplemented!(),
+        3 => {
+            items = earth_scene();
+            background = Vec3::new(0.70, 0.80, 1.00);
+            lookfrom = Vec3::new(13.0, 2.0, 3.0);
+            lookat = Vec3::new(0.0, 0.0, 0.0);
+            vfov = 20.0;
+        }
+        _ => panic!["Unimplemented scene code!"],
     }
 
+    let list_len = items.objects.len();
+    world = Bvh::new(&mut items, 0, list_len, 0.0, 0.0);
     let vup = Vec3::new(0.0, 1.0, 0.0);
     let dist_to_focus = 10.0;
 
@@ -256,7 +282,7 @@ fn main() {
                         let u = (i as f64 + rng.gen::<f64>()) / IMAGE_WIDTH as f64;
                         let v = (j as f64 + rng.gen::<f64>()) / IMAGE_HEIGHT as f64;
                         let r = cam.get_ray(u, v);
-                        col += ray_color(r, &world, DEPTH);
+                        col += ray_color(r, background, &world, DEPTH);
                     }
                     col /= SAMPLES_PER_PIXEL as f64;
                     col = Vec3::new(f64::sqrt(col.x), f64::sqrt(col.y), f64::sqrt(col.z));

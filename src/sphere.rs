@@ -37,7 +37,7 @@ impl Sphere {
         // x = -cos(phi)sin(theta)
         // z = sin(phi)sin(theta)
 
-        let theta = f64::cos(-p.y);
+        let theta = f64::acos(-p.y);
         let phi = f64::atan2(-p.z, p.x) + std::f64::consts::PI;
 
         // (U , V)
