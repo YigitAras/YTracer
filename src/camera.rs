@@ -1,7 +1,4 @@
-use crate::utils::*;
-
-use crate::ray::*;
-use crate::vector3::*;
+use crate::{ray::*, utils::*, vector3::*};
 
 pub struct Camera {
     pub origin: Vec3,

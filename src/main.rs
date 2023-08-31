@@ -42,14 +42,6 @@ fn ray_color(r: Ray, world: &dyn Hittable, depth: u64) -> Vec3 {
     let t = 0.5 * (unit_direction.y + 1.0);
     Vec3::new(1.0, 1.0, 1.0) * (1.0 - t) + Vec3::new(0.5, 0.7, 1.0) * t
 }
-fn random_vec(l: f64, h: f64) -> Vec3 {
-    let mut rng = rand::thread_rng();
-    Vec3 {
-        x: rng.gen_range(l..h),
-        y: rng.gen_range(l..h),
-        z: rng.gen_range(l..h),
-    }
-}
 
 fn random_scene() -> HittableList {
     let mut rng = rand::thread_rng();
