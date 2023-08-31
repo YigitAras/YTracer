@@ -63,6 +63,22 @@ impl Perlin {
         Perlin::trilinear_interp(c, u, v, w)
     }
 
+    // Sum of repeated calls to the noise function
+    // Essentially multiple summed frequencies
+    pub fn turbulance(&self, point: Vec3, depth: i64) -> f64 {
+        let mut accum = 0.0;
+        let mut temp_p = point;
+        let mut weight = 1.0;
+
+        for _ in 0..depth {
+            accum += weight* self.noise(temp_p);
+            weight *= 0.5;
+            temp_p =  temp_p * 2.0;
+        }
+
+        accum.abs()
+    }
+
     // TODO: Rustify the loop?
     fn trilinear_interp(c: [[[Vec3; 2]; 2]; 2], u: f64, v: f64, w: f64) -> f64 {
         let uu = u * u * (3.0 - 2.0 * u);

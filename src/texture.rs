@@ -75,6 +75,7 @@ impl NoiseTexture {
 
 impl Texture for NoiseTexture {
     fn value(&self, _: f64, _: f64, point: Vec3) -> Vec3 {
-        Vec3::new(1.0, 1.0, 1.0) * 0.5 * (1.0 + self.noise.noise(point * self.scale))
+        // Vec3::new(1.0, 1.0, 1.0) * self.noise.turbulance(point * self.scale, 7)
+           Vec3::new(1.0, 1.0, 1.0) * 0.5 * (1.0  + f64::sin(point.z * self.scale + 10.0 * self.noise.turbulance(point, 7)))
     }
 }
