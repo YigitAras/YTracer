@@ -35,7 +35,7 @@ pub struct Lambertian {
 impl Lambertian {
     pub fn from_color(c: Vec3) -> Self {
         Self {
-            albedo: Arc::new(SolidColor::new(c)),
+            albedo: Arc::new(SolidColor::from_color(c)),
         }
     }
     #[allow(dead_code)]
@@ -137,4 +137,25 @@ impl Material for Dielectric {
 
 pub struct DiffuseLight {
     emit: Arc<dyn Texture>,
+}
+
+impl DiffuseLight {
+    pub fn new(emit: Arc<dyn Texture>) -> Self {
+        Self { emit }
+    }
+    pub fn from_color(color: Vec3) -> Self {
+        Self {
+            emit: Arc::new(SolidColor::from_color(color)),
+        }
+    }
+}
+
+impl Material for DiffuseLight {
+    fn scatter(&self, _: Ray, _: &HitRecord) -> Option<(Ray, Vec3)> {
+        // No reflection is done through the light
+        None
+    }
+    fn emitted(&self, u: f64, v: f64, point: Vec3) -> Vec3 {
+        self.emit.value(u, v, point)
+    }
 }

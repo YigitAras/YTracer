@@ -10,6 +10,7 @@ use crate::{
     bvh::*, camera::*, hittable::*, hittable_list::*, material::*, ray::*, sphere::*, texture::*,
     utils::*, vector3::*,
 };
+use crate::rect::XYRect;
 
 mod aabb;
 mod bvh;
@@ -19,6 +20,7 @@ mod hittable_list;
 mod material;
 mod perlin;
 mod ray;
+mod rect;
 mod sphere;
 mod texture;
 mod utils;
@@ -175,6 +177,32 @@ fn earth_scene() -> HittableList {
     world
 }
 
+fn simple_light() -> HittableList {
+    let mut world: HittableList = Default::default();
+    let pertext: Arc<dyn Texture + Sync + Send> = Arc::new(NoiseTexture::new(4.0));
+    let mat_perlin: Arc<dyn Material + Sync + Send> = Arc::new(Lambertian::from_texture(pertext));
+    world.add(Arc::new(Sphere::new(
+        Vec3::new(0.0, -1000.0, 0.0),
+        1000.0,
+        Arc::clone(&mat_perlin),
+    )));
+
+    world.add(Arc::new(Sphere::new(
+        Vec3::new(0.0, 2.0, 0.0),
+        2.0,
+        Arc::clone(&mat_perlin),
+    )));
+
+    let diff_light: Arc<dyn Material + Sync + Send> = Arc::new(
+        DiffuseLight::from_color(Vec3::new(4.0,4.0,4.0))
+    );
+
+    world.add(Arc::new(XYRect::new(
+        3.0, 5.0, 1.0, 3.0, -2.0, diff_light
+    )));
+    world
+}
+
 fn main() {
     // IF DEBUG:
     // rayon::ThreadPoolBuilder::new()
@@ -202,7 +230,7 @@ fn main() {
     let mut background = Vec3::new(0.0, 0.0, 0.0);
 
     // Select World to Render
-    let scene_id = 3;
+    let scene_id: u8 = 4;
     let mut items: HittableList;
     match scene_id {
         0 => {
@@ -232,6 +260,13 @@ fn main() {
             background = Vec3::new(0.70, 0.80, 1.00);
             lookfrom = Vec3::new(13.0, 2.0, 3.0);
             lookat = Vec3::new(0.0, 0.0, 0.0);
+            vfov = 20.0;
+        }
+        4 => {
+            items = simple_light();
+            background = Vec3::new(0.0,0.0,0.0);
+            lookfrom = Vec3::new(26.0,3.0,6.0);
+            lookat = Vec3::new(0.0,2.0,0.0);
             vfov = 20.0;
         }
         _ => panic!["Unimplemented scene code!"],

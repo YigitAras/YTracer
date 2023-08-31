@@ -1,8 +1,7 @@
 use std::sync::Arc;
 
-use crate::perlin::*;
+use crate::{perlin::*, vector3::*};
 
-use crate::vector3::*;
 
 pub trait Texture: Sync + Send {
     fn value(&self, u: f64, v: f64, point: Vec3) -> Vec3;
@@ -13,11 +12,11 @@ pub struct SolidColor {
 }
 
 impl SolidColor {
-    pub fn new(c: Vec3) -> Self {
+    pub fn from_color(c: Vec3) -> Self {
         Self { color_value: c }
     }
     #[allow(dead_code)]
-    pub fn from_color(red: f64, green: f64, blue: f64) -> Self {
+    pub fn from_rgb(red: f64, green: f64, blue: f64) -> Self {
         Self {
             color_value: Vec3::new(red, green, blue),
         }
@@ -44,8 +43,8 @@ impl CheckerTexture {
     }
     pub fn from_color(c1: Vec3, c2: Vec3) -> Self {
         Self {
-            odd: Arc::new(SolidColor::new(c1)),
-            even: Arc::new(SolidColor::new(c2)),
+            odd: Arc::new(SolidColor::from_color(c1)),
+            even: Arc::new(SolidColor::from_color(c2)),
         }
     }
 }
