@@ -38,7 +38,7 @@ pub struct CheckerTexture {
 
 impl CheckerTexture {
     #[allow(dead_code)]
-    pub fn from_tex(even: Arc<dyn Texture>, odd: Arc<dyn Texture>) -> Self {
+    pub fn from_tex(even: Arc<dyn Texture>, odd: Arc<dyn Texture + Sync + Send>) -> Self {
         Self { odd, even }
     }
     pub fn from_color(c1: Vec3, c2: Vec3) -> Self {

@@ -8,9 +8,8 @@ use rayon::prelude::*;
 use crate::texture::CheckerTexture;
 use crate::{
     bvh::*, camera::*, hittable::*, hittable_list::*, material::*, ray::*, sphere::*, texture::*,
-    utils::*, vector3::*,
+    utils::*, vector3::*, rect::*
 };
-use crate::rect::XYRect;
 
 mod aabb;
 mod bvh;
@@ -197,8 +196,8 @@ fn simple_light() -> HittableList {
         DiffuseLight::from_color(Vec3::new(4.0,4.0,4.0))
     );
 
-    world.add(Arc::new(XYRect::new(
-        3.0, 5.0, 1.0, 3.0, -2.0, diff_light
+    world.add(Arc::new(AARect::new(
+        Plane::XY, 3.0, 5.0, 1.0, 3.0, -2.0, diff_light
     )));
     world
 }
@@ -227,7 +226,7 @@ fn main() {
     let lookat: Vec3;
     let vfov: f64;
     let mut aperture = 0.0;
-    let mut background = Vec3::new(0.0, 0.0, 0.0);
+    let background;
 
     // Select World to Render
     let scene_id: u8 = 4;
