@@ -140,9 +140,6 @@ pub struct DiffuseLight {
 }
 
 impl DiffuseLight {
-    pub fn new(emit: Arc<dyn Texture>) -> Self {
-        Self { emit }
-    }
     pub fn from_color(color: Vec3) -> Self {
         Self {
             emit: Arc::new(SolidColor::from_color(color)),

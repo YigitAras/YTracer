@@ -5,10 +5,9 @@ use kdam::tqdm;
 use rand::Rng;
 use rayon::prelude::*;
 
-use crate::texture::CheckerTexture;
 use crate::{
-    bvh::*, camera::*, hittable::*, hittable_list::*, material::*, ray::*, sphere::*, texture::*,
-    utils::*, vector3::*, rect::*
+    bvh::*, camera::*, hittable::*, hittable_list::*, material::*, ray::*, rect::*, sphere::*,
+    texture::*, utils::*, vector3::*,
 };
 
 mod aabb;
@@ -16,6 +15,7 @@ mod bvh;
 mod camera;
 mod hittable;
 mod hittable_list;
+mod instance;
 mod material;
 mod perlin;
 mod ray;
@@ -192,13 +192,108 @@ fn simple_light() -> HittableList {
         Arc::clone(&mat_perlin),
     )));
 
-    let diff_light: Arc<dyn Material + Sync + Send> = Arc::new(
-        DiffuseLight::from_color(Vec3::new(4.0,4.0,4.0))
-    );
+    let diff_light: Arc<dyn Material + Sync + Send> =
+        Arc::new(DiffuseLight::from_color(Vec3::new(4.0, 4.0, 4.0)));
 
     world.add(Arc::new(AARect::new(
-        Plane::XY, 3.0, 5.0, 1.0, 3.0, -2.0, diff_light
+        Plane::XY,
+        3.0,
+        5.0,
+        1.0,
+        3.0,
+        -2.0,
+        Arc::clone(&diff_light),
     )));
+
+    world.add(Arc::new(Sphere::new(
+        Vec3::new(0.0, 2.0, 5.0),
+        2.0,
+        Arc::clone(&diff_light),
+    )));
+
+    world
+}
+
+fn cornell_box() -> HittableList {
+    let mut world: HittableList = Default::default();
+    let red: Arc<dyn Material + Sync + Send> =
+        Arc::new(Lambertian::from_color(Vec3::new(0.65, 0.05, 0.05)));
+    let white: Arc<dyn Material + Sync + Send> =
+        Arc::new(Lambertian::from_color(Vec3::new(0.73, 0.73, 0.73)));
+    let green: Arc<dyn Material + Sync + Send> =
+        Arc::new(Lambertian::from_color(Vec3::new(0.12, 0.45, 0.15)));
+    let light: Arc<dyn Material + Sync + Send> =
+        Arc::new(DiffuseLight::from_color(Vec3::new(15.0, 15.0, 15.0)));
+
+    world.add(Arc::new(AARect::new(
+        Plane::YZ,
+        0.0,
+        555.0,
+        0.0,
+        555.0,
+        555.0,
+        Arc::clone(&green),
+    )));
+    world.add(Arc::new(AARect::new(
+        Plane::YZ,
+        0.0,
+        555.0,
+        0.0,
+        555.0,
+        0.0,
+        Arc::clone(&red),
+    )));
+    world.add(Arc::new(AARect::new(
+        Plane::XZ,
+        213.0,
+        343.0,
+        227.0,
+        332.0,
+        554.0,
+        Arc::clone(&light),
+    )));
+    // nope
+    world.add(Arc::new(AARect::new(
+        Plane::XZ,
+        0.0,
+        555.0,
+        0.0,
+        555.0,
+        0.0,
+        Arc::clone(&white),
+    )));
+    world.add(Arc::new(AARect::new(
+        Plane::XZ,
+        0.0,
+        555.0,
+        0.0,
+        555.0,
+        555.0,
+        Arc::clone(&white),
+    )));
+    world.add(Arc::new(AARect::new(
+        Plane::XY,
+        0.0,
+        555.0,
+        0.0,
+        555.0,
+        555.0,
+        Arc::clone(&white),
+    )));
+
+    // Add boxes to the cornell box
+    world.add(Arc::new(Box::new(
+        Vec3::new(130.0, 0.0, 65.0),
+        Vec3::new(295.0, 165.0, 230.0),
+        Arc::clone(&white),
+    )));
+
+    world.add(Arc::new(Box::new(
+        Vec3::new(265.0, 0.0, 295.0),
+        Vec3::new(430.0, 330.0, 460.0),
+        Arc::clone(&white),
+    )));
+
     world
 }
 
@@ -214,8 +309,8 @@ fn main() {
     // let mut rng = rand::thread_rng();
 
     // Image related
-    const ASPECT_RATIO: f64 = 3.0 / 2.0;
-    const IMAGE_WIDTH: u64 = 1200;
+    const ASPECT_RATIO: f64 = 1.0;
+    const IMAGE_WIDTH: u64 = 800;
     const IMAGE_HEIGHT: u64 = (IMAGE_WIDTH as f64 / ASPECT_RATIO) as u64;
     const SAMPLES_PER_PIXEL: u64 = 500;
     const DEPTH: u64 = 50;
@@ -229,7 +324,7 @@ fn main() {
     let background;
 
     // Select World to Render
-    let scene_id: u8 = 4;
+    let scene_id: u8 = 5;
     let mut items: HittableList;
     match scene_id {
         0 => {
@@ -263,10 +358,17 @@ fn main() {
         }
         4 => {
             items = simple_light();
-            background = Vec3::new(0.0,0.0,0.0);
-            lookfrom = Vec3::new(26.0,3.0,6.0);
-            lookat = Vec3::new(0.0,2.0,0.0);
+            background = Vec3::new(0.0, 0.0, 0.0);
+            lookfrom = Vec3::new(26.0, 3.0, 6.0);
+            lookat = Vec3::new(0.0, 2.0, 0.0);
             vfov = 20.0;
+        }
+        5 => {
+            items = cornell_box();
+            background = Vec3::new(0.0, 0.0, 0.0);
+            lookfrom = Vec3::new(278.0, 278.0, -800.0);
+            lookat = Vec3::new(278.0, 278.0, 0.0);
+            vfov = 40.0;
         }
         _ => panic!["Unimplemented scene code!"],
     }

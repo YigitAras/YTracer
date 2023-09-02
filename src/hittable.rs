@@ -12,6 +12,7 @@ pub struct HitRecord {
     pub u: f64,
     pub v: f64, // U and V for texture values
     pub t: f64,
+    pub front_face: bool,
 }
 
 impl HitRecord {
@@ -30,7 +31,18 @@ impl HitRecord {
             u,
             v,
             t,
+            front_face: true, // Placeholder
         }
+    }
+
+    pub fn set_face_normal(&mut self, r: Ray, outward_normal: Vec3) {
+        // NOTE: the parameter `outward_normal` is assumed to have unit length.
+        self.front_face = r.dir.dot(outward_normal) < 0.0;
+        self.normal = if self.front_face {
+            outward_normal
+        } else {
+            -outward_normal
+        };
     }
 }
 
