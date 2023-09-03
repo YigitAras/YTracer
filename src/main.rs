@@ -9,6 +9,7 @@ use crate::{
     bvh::*, camera::*, hittable::*, hittable_list::*, material::*, ray::*, rect::*, sphere::*,
     texture::*, utils::*, vector3::*,
 };
+use crate::instance::{Translate, YRotate};
 
 mod aabb;
 mod bvh;
@@ -24,6 +25,7 @@ mod sphere;
 mod texture;
 mod utils;
 mod vector3;
+mod constant_medium;
 
 fn ray_color(r: Ray, background: Vec3, world: &dyn Hittable, depth: u64) -> Vec3 {
     // Depth limit reached don't accumulate any more light
@@ -282,17 +284,23 @@ fn cornell_box() -> HittableList {
     )));
 
     // Add boxes to the cornell box
-    world.add(Arc::new(Box::new(
-        Vec3::new(130.0, 0.0, 65.0),
-        Vec3::new(295.0, 165.0, 230.0),
+    let mut box1: Arc<dyn Hittable> = Arc::new(Box::new(
+        Vec3::new(0.0, 0.0, 0.0),
+        Vec3::new(165.0, 330.0, 165.0),
         Arc::clone(&white),
-    )));
+    ));
+    box1 = Arc::new(YRotate::new(box1, 15.0));
+    box1 = Arc::new(Translate::new(box1, Vec3::new(265.0,0.0,295.0)));
+    world.add(box1);
 
-    world.add(Arc::new(Box::new(
-        Vec3::new(265.0, 0.0, 295.0),
-        Vec3::new(430.0, 330.0, 460.0),
+    let mut box2: Arc<dyn Hittable> = Arc::new(Box::new(
+        Vec3::new(0.0, 0.0, 0.0),
+        Vec3::new(165.0,165.0,165.0),
         Arc::clone(&white),
-    )));
+    ));
+    box2 = Arc::new(YRotate::new(box2, -18.0));
+    box2 = Arc::new(Translate::new(box2, Vec3::new(130.0,0.0,65.0)));
+    world.add(box2);
 
     world
 }

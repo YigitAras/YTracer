@@ -24,7 +24,11 @@ fn reflectance(cosine: f64, ref_idx: f64) -> f64 {
 pub trait Material {
     //: DynClone {
     fn scatter(&self, r_in: Ray, hit: &HitRecord) -> Option<(Ray, Vec3)>;
-    fn emitted(&self, u: f64, v: f64, point: Vec3) -> Vec3;
+
+    // As default objects shouldn't emit light
+    fn emitted(&self, u: f64, v: f64, point: Vec3) -> Vec3 {
+        Vec3::new(0.0,0.0,0.0)
+    }
 }
 
 #[derive(Clone)]
@@ -58,10 +62,6 @@ impl Material for Lambertian {
         let attenuation = self.albedo.value(hit.u, hit.v, hit.p);
         Some((scattered, attenuation))
     }
-    // Lambertian does not emit light
-    fn emitted(&self, _: f64, _: f64, _: Vec3) -> Vec3 {
-        Vec3::new(0.0, 0.0, 0.0)
-    }
 }
 
 #[derive(Clone, Copy)]
@@ -91,10 +91,6 @@ impl Material for Metal {
         } else {
             None
         }
-    }
-    // Metal does not emit any light
-    fn emitted(&self, _: f64, _: f64, _: Vec3) -> Vec3 {
-        Vec3::new(0.0, 0.0, 0.0)
     }
 }
 
@@ -129,10 +125,6 @@ impl Material for Dielectric {
         let scattered = Ray::new(hit.p, direction);
         Some((scattered, attenuation))
     }
-    // Dielectric does not emit any light
-    fn emitted(&self, _: f64, _: f64, _: Vec3) -> Vec3 {
-        Vec3::new(0.0, 0.0, 0.0)
-    }
 }
 
 pub struct DiffuseLight {
@@ -154,5 +146,31 @@ impl Material for DiffuseLight {
     }
     fn emitted(&self, u: f64, v: f64, point: Vec3) -> Vec3 {
         self.emit.value(u, v, point)
+    }
+}
+
+pub struct Isotropic {
+    albedo: Arc<dyn Texture + Sync + Send>
+}
+
+impl Isotropic {
+    pub fn from_color(c: Vec3) -> Self {
+        Self {
+            albedo: Arc::new(SolidColor::from_color(c))
+        }
+    }
+    pub fn from_tex(texture: Arc<dyn Texture + Sync + Send>)-> Self {
+        Self {
+            albedo: Arc::clone(&texture)
+        }
+    }
+}
+
+impl Material for Isotropic {
+    fn scatter(&self, r_in: Ray, hit: &HitRecord) -> Option<(Ray, Vec3)> {
+        let scattered = Ray::new(hit.p, random_in_unit_sphere());
+        let attenuation = self.albedo.value(hit.u, hit.v, hit.p);
+
+        Some((scattered,attenuation))
     }
 }

@@ -74,7 +74,7 @@ impl Hittable for Sphere {
         let p_temp = r.at(t_temp);
         let outward_normal = (p_temp - self.center) / self.radius;
         // Need to temporarily create this to calculate the U,V
-        let mut hitrect = HitRecord::new(
+        let mut hitrec = HitRecord::new(
             p_temp,
             outward_normal,
             t_temp,
@@ -82,11 +82,11 @@ impl Hittable for Sphere {
             0.0,
             Arc::clone(&self.mat_ptr),
         );
-        hitrect.set_face_normal(r, outward_normal);
+        hitrec.set_face_normal(r, outward_normal);
 
-        (hitrect.u, hitrect.v) = Sphere::get_uv(hitrect.normal);
+        (hitrec.u, hitrec.v) = Sphere::get_uv(hitrec.normal);
 
-        Some(hitrect)
+        Some(hitrec)
     }
 
     // TODO: Rustify this part, currently it is C-like
