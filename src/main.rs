@@ -404,12 +404,6 @@ fn cornell_with_gas() -> HittableList {
     world
 }
 
-fn final_scene() -> HittableList {
-    let mut world: HittableList = Default::default();
-
-    world
-}
-
 fn main() {
     // IF DEBUG:
     // rayon::ThreadPoolBuilder::new()
@@ -437,7 +431,7 @@ fn main() {
     let background;
 
     // Select World to Render
-    let scene_id: u8 = 7;
+    let scene_id: u8 = 5;
     let mut items: HittableList;
     match scene_id {
         0 => {
@@ -490,9 +484,6 @@ fn main() {
             lookat = Vec3::new(278.0, 278.0, 0.0);
             vfov = 40.0;
         }
-        7 => {
-
-        }
         _ => panic!["Unimplemented scene code!"],
     }
 
@@ -526,9 +517,12 @@ fn main() {
     let mut file = BufWriter::new(file);
     let data = format!("P3\n{IMAGE_WIDTH} {IMAGE_HEIGHT}\n255\n");
 
+
+
     file.write_all(data.as_bytes())
         .expect("Unable to write the header!");
-
+    // TODO: Move render to the camera
+    // TODO: Pixel-wise Add stratification
     // Render
     let rows: Vec<Vec<Vec3>> = tqdm!((0..IMAGE_HEIGHT).rev(), animation = "fillup")
         .map(|j| {

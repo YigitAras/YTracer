@@ -1,3 +1,5 @@
+use rand::Rng;
+use rand::rngs::ThreadRng;
 use crate::{ray::*, utils::*, vector3::*};
 
 pub struct Camera {
@@ -8,7 +10,7 @@ pub struct Camera {
     u: Vec3,
     v: Vec3,
     _w: Vec3,
-    lens_radius: f64,
+    lens_radius: f64
 }
 
 impl Camera {
@@ -42,7 +44,7 @@ impl Camera {
             u,
             v,
             _w: w,
-            lens_radius: aperture / 2.0,
+            lens_radius: aperture / 2.0
         }
     }
 
