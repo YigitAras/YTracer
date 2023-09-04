@@ -5,15 +5,17 @@ use kdam::tqdm;
 use rand::Rng;
 use rayon::prelude::*;
 
+use crate::constant_medium::ConstantMedium;
+use crate::instance::{Translate, YRotate};
 use crate::{
     bvh::*, camera::*, hittable::*, hittable_list::*, material::*, ray::*, rect::*, sphere::*,
     texture::*, utils::*, vector3::*,
 };
-use crate::instance::{Translate, YRotate};
 
 mod aabb;
 mod bvh;
 mod camera;
+mod constant_medium;
 mod hittable;
 mod hittable_list;
 mod instance;
@@ -25,7 +27,6 @@ mod sphere;
 mod texture;
 mod utils;
 mod vector3;
-mod constant_medium;
 
 fn ray_color(r: Ray, background: Vec3, world: &dyn Hittable, depth: u64) -> Vec3 {
     // Depth limit reached don't accumulate any more light
@@ -290,17 +291,121 @@ fn cornell_box() -> HittableList {
         Arc::clone(&white),
     ));
     box1 = Arc::new(YRotate::new(box1, 15.0));
-    box1 = Arc::new(Translate::new(box1, Vec3::new(265.0,0.0,295.0)));
+    box1 = Arc::new(Translate::new(box1, Vec3::new(265.0, 0.0, 295.0)));
     world.add(box1);
 
     let mut box2: Arc<dyn Hittable> = Arc::new(Box::new(
         Vec3::new(0.0, 0.0, 0.0),
-        Vec3::new(165.0,165.0,165.0),
+        Vec3::new(165.0, 165.0, 165.0),
         Arc::clone(&white),
     ));
     box2 = Arc::new(YRotate::new(box2, -18.0));
-    box2 = Arc::new(Translate::new(box2, Vec3::new(130.0,0.0,65.0)));
+    box2 = Arc::new(Translate::new(box2, Vec3::new(130.0, 0.0, 65.0)));
     world.add(box2);
+
+    world
+}
+
+fn cornell_with_gas() -> HittableList {
+    let mut world: HittableList = Default::default();
+    let red: Arc<dyn Material + Sync + Send> =
+        Arc::new(Lambertian::from_color(Vec3::new(0.65, 0.05, 0.05)));
+    let white: Arc<dyn Material + Sync + Send> =
+        Arc::new(Lambertian::from_color(Vec3::new(0.73, 0.73, 0.73)));
+    let green: Arc<dyn Material + Sync + Send> =
+        Arc::new(Lambertian::from_color(Vec3::new(0.12, 0.45, 0.15)));
+    let light: Arc<dyn Material + Sync + Send> =
+        Arc::new(DiffuseLight::from_color(Vec3::new(15.0, 15.0, 15.0)));
+
+    world.add(Arc::new(AARect::new(
+        Plane::YZ,
+        0.0,
+        555.0,
+        0.0,
+        555.0,
+        555.0,
+        Arc::clone(&green),
+    )));
+    world.add(Arc::new(AARect::new(
+        Plane::YZ,
+        0.0,
+        555.0,
+        0.0,
+        555.0,
+        0.0,
+        Arc::clone(&red),
+    )));
+    world.add(Arc::new(AARect::new(
+        Plane::XZ,
+        213.0,
+        343.0,
+        227.0,
+        332.0,
+        554.0,
+        Arc::clone(&light),
+    )));
+    // nope
+    world.add(Arc::new(AARect::new(
+        Plane::XZ,
+        0.0,
+        555.0,
+        0.0,
+        555.0,
+        0.0,
+        Arc::clone(&white),
+    )));
+    world.add(Arc::new(AARect::new(
+        Plane::XZ,
+        0.0,
+        555.0,
+        0.0,
+        555.0,
+        555.0,
+        Arc::clone(&white),
+    )));
+    world.add(Arc::new(AARect::new(
+        Plane::XY,
+        0.0,
+        555.0,
+        0.0,
+        555.0,
+        555.0,
+        Arc::clone(&white),
+    )));
+
+    // Add boxes to the cornell box
+    let mut box1: Arc<dyn Hittable + Sync + Send> = Arc::new(Box::new(
+        Vec3::new(0.0, 0.0, 0.0),
+        Vec3::new(165.0, 330.0, 165.0),
+        Arc::clone(&white),
+    ));
+    box1 = Arc::new(YRotate::new(box1, 15.0));
+    box1 = Arc::new(Translate::new(box1, Vec3::new(265.0, 0.0, 295.0)));
+
+    let mut box2: Arc<dyn Hittable + Sync + Send> = Arc::new(Box::new(
+        Vec3::new(0.0, 0.0, 0.0),
+        Vec3::new(165.0, 165.0, 165.0),
+        Arc::clone(&white),
+    ));
+    box2 = Arc::new(YRotate::new(box2, -18.0));
+    box2 = Arc::new(Translate::new(box2, Vec3::new(130.0, 0.0, 65.0)));
+
+    world.add(Arc::new(ConstantMedium::from_color(
+        box1,
+        0.01,
+        Vec3::new(0.0, 0.0, 0.0),
+    )));
+    world.add(Arc::new(ConstantMedium::from_color(
+        box2,
+        0.01,
+        Vec3::new(1.0, 1.0, 1.0),
+    )));
+
+    world
+}
+
+fn final_scene() -> HittableList {
+    let mut world: HittableList = Default::default();
 
     world
 }
@@ -332,7 +437,7 @@ fn main() {
     let background;
 
     // Select World to Render
-    let scene_id: u8 = 5;
+    let scene_id: u8 = 7;
     let mut items: HittableList;
     match scene_id {
         0 => {
@@ -377,6 +482,16 @@ fn main() {
             lookfrom = Vec3::new(278.0, 278.0, -800.0);
             lookat = Vec3::new(278.0, 278.0, 0.0);
             vfov = 40.0;
+        }
+        6 => {
+            items = cornell_with_gas();
+            background = Vec3::new(0.0, 0.0, 0.0);
+            lookfrom = Vec3::new(278.0, 278.0, -800.0);
+            lookat = Vec3::new(278.0, 278.0, 0.0);
+            vfov = 40.0;
+        }
+        7 => {
+
         }
         _ => panic!["Unimplemented scene code!"],
     }

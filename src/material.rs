@@ -26,8 +26,8 @@ pub trait Material {
     fn scatter(&self, r_in: Ray, hit: &HitRecord) -> Option<(Ray, Vec3)>;
 
     // As default objects shouldn't emit light
-    fn emitted(&self, u: f64, v: f64, point: Vec3) -> Vec3 {
-        Vec3::new(0.0,0.0,0.0)
+    fn emitted(&self, _u: f64, _v: f64, _point: Vec3) -> Vec3 {
+        Vec3::new(0.0, 0.0, 0.0)
     }
 }
 
@@ -150,27 +150,27 @@ impl Material for DiffuseLight {
 }
 
 pub struct Isotropic {
-    albedo: Arc<dyn Texture + Sync + Send>
+    albedo: Arc<dyn Texture + Sync + Send>,
 }
 
 impl Isotropic {
     pub fn from_color(c: Vec3) -> Self {
         Self {
-            albedo: Arc::new(SolidColor::from_color(c))
+            albedo: Arc::new(SolidColor::from_color(c)),
         }
     }
-    pub fn from_tex(texture: Arc<dyn Texture + Sync + Send>)-> Self {
+    pub fn from_tex(texture: Arc<dyn Texture + Sync + Send>) -> Self {
         Self {
-            albedo: Arc::clone(&texture)
+            albedo: Arc::clone(&texture),
         }
     }
 }
 
 impl Material for Isotropic {
-    fn scatter(&self, r_in: Ray, hit: &HitRecord) -> Option<(Ray, Vec3)> {
+    fn scatter(&self, _r_in: Ray, hit: &HitRecord) -> Option<(Ray, Vec3)> {
         let scattered = Ray::new(hit.p, random_in_unit_sphere());
         let attenuation = self.albedo.value(hit.u, hit.v, hit.p);
 
-        Some((scattered,attenuation))
+        Some((scattered, attenuation))
     }
 }

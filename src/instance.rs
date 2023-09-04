@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use crate::{hittable::*, vector3::*,ray::*,aabb::*,utils::*};
+use crate::{aabb::*, hittable::*, ray::*, utils::*, vector3::*};
 
 /*
  *  Instead of moving the object, just move the ray in opposite direction
@@ -8,21 +8,18 @@ use crate::{hittable::*, vector3::*,ray::*,aabb::*,utils::*};
  */
 pub struct Translate {
     obj_ptr: Arc<dyn Hittable>,
-    offset: Vec3
+    offset: Vec3,
 }
 
 impl Translate {
-    pub fn new(obj_ptr: Arc<dyn Hittable>, offset: Vec3) ->Self {
-        Self {
-            obj_ptr, offset
-        }
+    pub fn new(obj_ptr: Arc<dyn Hittable>, offset: Vec3) -> Self {
+        Self { obj_ptr, offset }
     }
 }
 
-
 impl Hittable for Translate {
     fn hit(&self, r: Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
-        let moved_r = Ray::new(r.orig-self.offset, r.dir);
+        let moved_r = Ray::new(r.orig - self.offset, r.dir);
 
         if let Some(mut hit) = self.obj_ptr.hit(moved_r, t_min, t_max) {
             hit.p += self.offset;
@@ -38,9 +35,9 @@ impl Hittable for Translate {
             return false;
         }
 
-        *output_box = Aabb{
+        *output_box = Aabb {
             minimum: output_box.minimum + self.offset,
-            maximum: output_box.maximum + self.offset
+            maximum: output_box.maximum + self.offset,
         };
         true
     }
@@ -50,7 +47,7 @@ pub struct YRotate {
     sin_theta: f64,
     cos_theta: f64,
     obj_ptr: Arc<dyn Hittable>,
-    bbox: Aabb
+    bbox: Aabb,
 }
 
 impl YRotate {
@@ -60,20 +57,20 @@ impl YRotate {
         let cos_theta = f64::cos(rads);
         let mut bbox = Default::default();
         // TODO: Change the API to return Optional<Aabb>
-        let _ = obj_ptr.bounding_box(0.0,0.0,&mut bbox);
+        let _ = obj_ptr.bounding_box(0.0, 0.0, &mut bbox);
 
-        let mut min = Vec3::new(f64::MAX,f64::MAX, f64::MAX);
-        let mut max = Vec3::new(f64::MIN,f64::MIN,f64::MIN);
+        let mut min = Vec3::new(f64::MAX, f64::MAX, f64::MAX);
+        let mut max = Vec3::new(f64::MIN, f64::MIN, f64::MIN);
 
-        for  i in 0..2 {
+        for i in 0..2 {
             for j in 0..2 {
                 for k in 0..2 {
-                    let x = i as f64 * bbox.maximum.x +  (1-i) as f64 * bbox.minimum.x;
-                    let y = j as f64 * bbox.maximum.y +  (1-j) as f64 * bbox.minimum.y;
-                    let z = k as f64 * bbox.maximum.z +  (1-k) as f64 * bbox.minimum.z;
+                    let x = i as f64 * bbox.maximum.x + (1 - i) as f64 * bbox.minimum.x;
+                    let y = j as f64 * bbox.maximum.y + (1 - j) as f64 * bbox.minimum.y;
+                    let z = k as f64 * bbox.maximum.z + (1 - k) as f64 * bbox.minimum.z;
 
-                    let newx =  cos_theta*x + sin_theta*z;
-                    let newz = -sin_theta*x + cos_theta*z;
+                    let newx = cos_theta * x + sin_theta * z;
+                    let newz = -sin_theta * x + cos_theta * z;
 
                     let tester = Vec3::new(newx, y, newz);
 
@@ -84,15 +81,17 @@ impl YRotate {
                 }
             }
         }
-        bbox = Aabb {minimum: min, maximum: max};
+        bbox = Aabb {
+            minimum: min,
+            maximum: max,
+        };
 
         Self {
             sin_theta,
             cos_theta,
             obj_ptr,
-            bbox
+            bbox,
         }
-
     }
 }
 
@@ -112,11 +111,11 @@ impl Hittable for YRotate {
         if let Some(mut hit) = self.obj_ptr.hit(rotated_r, t_min, t_max) {
             let mut p = hit.p;
             let mut normal = hit.normal;
-            p[0] =  self.cos_theta*hit.p[0] + self.sin_theta*hit.p[2];
-            p[2] = -self.sin_theta*hit.p[0] + self.cos_theta*hit.p[2];
+            p[0] = self.cos_theta * hit.p[0] + self.sin_theta * hit.p[2];
+            p[2] = -self.sin_theta * hit.p[0] + self.cos_theta * hit.p[2];
 
-            normal[0] =  self.cos_theta*hit.normal[0] + self.sin_theta*hit.normal[2];
-            normal[2] = -self.sin_theta*hit.normal[0] + self.cos_theta*hit.normal[2];
+            normal[0] = self.cos_theta * hit.normal[0] + self.sin_theta * hit.normal[2];
+            normal[2] = -self.sin_theta * hit.normal[0] + self.cos_theta * hit.normal[2];
 
             hit.p = p;
             hit.set_face_normal(rotated_r, normal);
