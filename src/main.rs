@@ -402,7 +402,7 @@ fn main() {
     let lookfrom: Vec3;
     let lookat: Vec3;
     let vfov: f64;
-    let mut aperture = 0.0;
+    let mut _aperture = 0.0;
     let background;
 
     // Select World to Render
@@ -415,7 +415,7 @@ fn main() {
             lookfrom = Vec3::new(13.0, 2.0, 3.0);
             lookat = Vec3::new(0.0, 0.0, 0.0);
             vfov = 20.0;
-            aperture = 0.1;
+            _aperture = 0.1;
         }
         1 => {
             items = checker_world();
