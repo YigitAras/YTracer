@@ -7,6 +7,10 @@ Resources that have been used:
 - **[Ray Tracing The Next Week](https://raytracing.github.io/books/RayTracingTheNextWeek.html)**
 - Some Rust parallelism ideas and code from **[Fralken](https://github.com/fralken/ray-tracing-the-next-week)**'s work.
 
+Some of the renders as the project progresses:
+- Ray Traced Cornell Box
+
+![Ray Traced Cornell Box](renders/cornell_raytraced.png)
 
 ## Pre-Commit Cleanup
 

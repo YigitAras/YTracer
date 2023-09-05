@@ -26,7 +26,7 @@ pub trait Material {
     fn scatter(&self, r_in: Ray, hit: &HitRecord) -> Option<(Ray, Vec3)>;
 
     // As default objects shouldn't emit light
-    fn emitted(&self, _u: f64, _v: f64, _point: Vec3) -> Vec3 {
+    fn emitted(&self, _: f64, _:  f64, _: Vec3) -> Vec3 {
         Vec3::new(0.0, 0.0, 0.0)
     }
 }
@@ -159,6 +159,7 @@ impl Isotropic {
             albedo: Arc::new(SolidColor::from_color(c)),
         }
     }
+    #[allow(dead_code)]
     pub fn from_tex(texture: Arc<dyn Texture + Sync + Send>) -> Self {
         Self {
             albedo: Arc::clone(&texture),

@@ -17,6 +17,7 @@ impl ConstantMedium {
             phase_function: Arc::new(Isotropic::from_color(c)),
         }
     }
+    #[allow(dead_code)]
     pub fn from_tex(
         b: Arc<dyn Hittable + Sync + Send>,
         d: f64,
