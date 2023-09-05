@@ -26,7 +26,7 @@ pub trait Material {
     fn scatter(&self, r_in: Ray, hit: &HitRecord) -> Option<(Ray, Vec3)>;
 
     // As default objects shouldn't emit light
-    fn emitted(&self, _u: f64, _v: f64, _point: Vec3) -> Vec3 {
+    fn emitted(&self, u: f64, v: f64, point: Vec3) -> Vec3 {
         Vec3::new(0.0, 0.0, 0.0)
     }
 }
