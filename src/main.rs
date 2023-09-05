@@ -27,6 +27,7 @@ mod sphere;
 mod texture;
 mod utils;
 mod vector3;
+mod camera2;
 
 fn ray_color(r: Ray, background: Vec3, world: &dyn Hittable, depth: u64) -> Vec3 {
     // Depth limit reached don't accumulate any more light
