@@ -1,4 +1,12 @@
-# y-tracer
+# T-tracer
+
+A small personal project to learn more about Rust and Ray Tracing. Will little by little improve and add new things on top of what there is already.
+
+Resources that have been used:
+- **[Ray Tracing in One Weekend](https://raytracing.github.io/books/RayTracingInOneWeekend.html)**
+- **[Ray Tracing The Next Week](https://raytracing.github.io/books/RayTracingTheNextWeek.html)**
+- Some Rust parallelism ideas and code from **[Fralken](https://github.com/fralken/ray-tracing-the-next-week)**'s work.
+
 
 ## Pre-Commit Cleanup
 
