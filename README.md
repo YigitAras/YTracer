@@ -1,4 +1,4 @@
-# T-tracer
+# Y-tracer
 
 A small personal project to learn more about Rust and Ray Tracing. Will little by little improve and add new things on top of what there is already.
 
