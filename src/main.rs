@@ -22,6 +22,7 @@ mod texture;
 mod utils;
 mod vector3;
 mod camera;
+mod triangle;
 
 
 fn random_scene() -> HittableList {
