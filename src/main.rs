@@ -1,14 +1,23 @@
-use std::sync::Arc;
 use rand::Rng;
-
+use std::sync::Arc;
 
 use crate::{
-    bvh::*, camera::*, hittable::*, hittable_list::*, material::*, rect::*, sphere::*,
-    texture::*, utils::*, vector3::*, constant_medium::*, instance::*
+    bvh::*, camera::*, constant_medium::*, hittable::*, hittable_list::*, instance::*, material::*,
+    rect::*, sphere::*, texture::*, triangle::*, utils::*, vector3::*,
 };
+use crate::mesh::Mesh;
+
+// General Todo's to implement
+// TODO: (1) A class for meshes with one material
+// TODO: (2) Implement transforms as matrix objects
+// TODO: (3) Analyse and find hot points, make them faster
+// TODO: (4) Implement SIMD and Vectorized speed-ups
+// TODO: (5) Better API for object, material and texture creation. Too verbose atm...
+// TODO: (6) Different Tree implementations
 
 mod aabb;
 mod bvh;
+mod camera;
 mod constant_medium;
 mod hittable;
 mod hittable_list;
@@ -19,10 +28,10 @@ mod ray;
 mod rect;
 mod sphere;
 mod texture;
+mod triangle;
 mod utils;
 mod vector3;
-mod camera;
-
+mod mesh;
 
 fn random_scene() -> HittableList {
     let mut rng = rand::thread_rng();
@@ -261,20 +270,22 @@ fn cornell_box() -> HittableList {
     )));
 
     // Add boxes to the cornell box
-    let mut box1: Arc<dyn Hittable> = Arc::new(Box::new(
+    let mut box1: Arc<dyn Hittable> = Arc::new(Box::new_triangles(
         Vec3::new(0.0, 0.0, 0.0),
         Vec3::new(165.0, 330.0, 165.0),
         Arc::clone(&white),
     ));
+
     box1 = Arc::new(YRotate::new(box1, 15.0));
     box1 = Arc::new(Translate::new(box1, Vec3::new(265.0, 0.0, 295.0)));
     world.add(box1);
 
-    let mut box2: Arc<dyn Hittable> = Arc::new(Box::new(
+    let mut box2: Arc<dyn Hittable> = Arc::new(Box::new_triangles(
         Vec3::new(0.0, 0.0, 0.0),
         Vec3::new(165.0, 165.0, 165.0),
         Arc::clone(&white),
     ));
+
     box2 = Arc::new(YRotate::new(box2, -18.0));
     box2 = Arc::new(Translate::new(box2, Vec3::new(130.0, 0.0, 65.0)));
     world.add(box2);
@@ -380,21 +391,125 @@ fn cornell_with_gas() -> HittableList {
     world
 }
 
+fn cornell_with_mesh() -> HittableList {
+    let mut world: HittableList = Default::default();
+    let red: Arc<dyn Material + Sync + Send> =
+        Arc::new(Lambertian::from_color(Vec3::new(0.65, 0.05, 0.05)));
+    let white: Arc<dyn Material + Sync + Send> =
+        Arc::new(Lambertian::from_color(Vec3::new(0.73, 0.73, 0.73)));
+    let green: Arc<dyn Material + Sync + Send> =
+        Arc::new(Lambertian::from_color(Vec3::new(0.12, 0.45, 0.15)));
+    let light: Arc<dyn Material + Sync + Send> =
+        Arc::new(DiffuseLight::from_color(Vec3::new(15.0, 15.0, 15.0)));
+
+    world.add(Arc::new(AARect::new(
+        Plane::YZ,
+        0.0,
+        555.0,
+        0.0,
+        555.0,
+        555.0,
+        Arc::clone(&green),
+    )));
+    world.add(Arc::new(AARect::new(
+        Plane::YZ,
+        0.0,
+        555.0,
+        0.0,
+        555.0,
+        0.0,
+        Arc::clone(&red),
+    )));
+    world.add(Arc::new(AARect::new(
+        Plane::XZ,
+        213.0,
+        343.0,
+        227.0,
+        332.0,
+        554.0,
+        Arc::clone(&light),
+    )));
+    // nope
+    world.add(Arc::new(AARect::new(
+        Plane::XZ,
+        0.0,
+        555.0,
+        0.0,
+        555.0,
+        0.0,
+        Arc::clone(&white),
+    )));
+    world.add(Arc::new(AARect::new(
+        Plane::XZ,
+        0.0,
+        555.0,
+        0.0,
+        555.0,
+        555.0,
+        Arc::clone(&white),
+    )));
+    world.add(Arc::new(AARect::new(
+        Plane::XY,
+        0.0,
+        555.0,
+        0.0,
+        555.0,
+        555.0,
+        Arc::clone(&white),
+    )));
+
+    // Hand-waivy location math
+    let mut first_loc = (Vec3::new(0.0, 0.0, 0.0) + Vec3::new(165.0, 165.0, 165.0)) / 2.0;
+    first_loc += Vec3::new(320.0, 165.0/2.0 - 35.0, 240.0);
+
+
+    let mut second_loc = (Vec3::new(0.0, 0.0, 0.0) + Vec3::new(165.0, 165.0, 165.0)) / 2.0;
+    second_loc += Vec3::new(130.0, 0.0, 65.0);
+    second_loc += Vec3::new(-70.0, 30.0, -40.0);
+
+    let mut bunny_mesh: Arc<dyn Hittable> = Arc::new(
+        Mesh::new("static/stanford_bunny.obj",Arc::clone(&white), Vec3::new(1000.0,1000.0,1000.0))
+    );
+
+    bunny_mesh = Arc::new(Translate::new(bunny_mesh, first_loc));
+
+    let mut monkey_mesh: Arc<dyn Hittable>= Arc::new(
+        Mesh::new("static/monkey.obj", Arc::clone(&white), Vec3::new(85.0, 85.0, 85.0))
+    );
+
+    monkey_mesh = Arc::new(YRotate::new(monkey_mesh, 150.0));
+    monkey_mesh = Arc::new(Translate::new(monkey_mesh, second_loc));
+
+    world.add(bunny_mesh);
+    world.add(monkey_mesh);
+
+
+    let mut box2: Arc<dyn Hittable> = Arc::new(Box::new_triangles(
+        Vec3::new(0.0, 0.0, 0.0),
+        Vec3::new(165.0, 165.0, 165.0),
+        Arc::clone(&white),
+    ));
+
+    box2 = Arc::new(YRotate::new(box2, -18.0));
+    box2 = Arc::new(Translate::new(box2, Vec3::new(320.0, 0.0, 240.0)));
+    world.add(box2);
+
+    world
+}
+
 fn main() {
     // IF DEBUG:
-    // rayon::ThreadPoolBuilder::new()
-    //     .num_threads(1)
-    //     .build_global()
-    //     .unwrap();
+    //rayon::ThreadPoolBuilder::new()
+    //   .num_threads(1)
+    //    .build_global()
+    //   .unwrap();
 
     println!("Program started...\n");
-    // Set number of threads
-    // let mut rng = rand::thread_rng();
 
     // Image related
     const ASPECT_RATIO: f64 = 1.0;
     const IMAGE_WIDTH: u64 = 800;
-    const SAMPLES_PER_PIXEL: u64 = 500;
+    const SAMPLES_PER_PIXEL: u64 = 100;
     const DEPTH: u64 = 50;
     // World
     let world;
@@ -406,7 +521,7 @@ fn main() {
     let background;
 
     // Select World to Render
-    let scene_id: u8 = 5;
+    let scene_id: u8 = 7;
     let mut items: HittableList;
     match scene_id {
         0 => {
@@ -459,12 +574,18 @@ fn main() {
             lookat = Vec3::new(278.0, 278.0, 0.0);
             vfov = 40.0;
         }
+        7 => {
+            items = cornell_with_mesh();
+            background = Vec3::new(0.0, 0.0, 0.0);
+            lookfrom = Vec3::new(278.0, 278.0, -800.0);
+            lookat = Vec3::new(278.0, 278.0, 0.0);
+            vfov = 40.0;
+        }
         _ => panic!["Unimplemented scene code!"],
     }
 
     let list_len = items.objects.len();
     world = Bvh::new(&mut items, 0, list_len, 0.0, 0.0);
-
     // Initialize the camera
     let camera = Camera::init(
         ASPECT_RATIO,
@@ -473,7 +594,7 @@ fn main() {
         DEPTH,
         vfov,
         lookfrom,
-        lookat
+        lookat,
     );
 
     camera.render(&world, background);
