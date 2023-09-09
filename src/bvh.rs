@@ -5,17 +5,20 @@ use crate::hittable::*;
 use crate::hittable_list::*;
 use crate::ray::*;
 
+#[allow(dead_code)]
 enum BVHNode {
     Branch { left: Arc<Bvh>, right: Arc<Bvh> },
     Leaf(Arc<dyn Hittable>),
 }
 
+
 pub struct Bvh {
-    bbox: Aabb,
+    pub bbox: Aabb,
     tree: BVHNode,
 }
 // TODO: Make sure the ranges time0..time1 are forwarded properly when implemented
 impl Bvh {
+    #[allow(dead_code)]
     #[inline]
     fn axis_selection(objs: &[Arc<dyn Hittable>]) -> usize {
         fn axis_range(objs: &[Arc<dyn Hittable>], axis: usize) -> f64 {
@@ -38,6 +41,7 @@ impl Bvh {
             ranges[0].0
         }
     }
+    #[allow(dead_code)]
     pub fn new(
         objects_copy: &mut HittableList,
         start: usize,

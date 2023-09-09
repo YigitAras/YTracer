@@ -1,6 +1,7 @@
 use std::sync::Arc;
 
 use crate::{aabb::*, hittable::*, hittable_list::*, material::*, ray::*, vector3::*};
+use crate::triangle::Triangle;
 
 #[derive(Clone)]
 pub enum Plane {
@@ -73,7 +74,7 @@ impl Hittable for AARect {
 
         Some(hit_rect)
     }
-    // TODO: Does not look right. Adjust the epsilon side depending on the plane
+
     fn bounding_box(&self, _: f64, _: f64, output_box: &mut Aabb) -> bool {
         // Add a little bit of padding
         match self.plane {
@@ -110,6 +111,85 @@ pub struct Box {
 }
 
 impl Box {
+    pub fn new_triangles(p0: Vec3, p1: Vec3 , mat_ptr: Arc<dyn Material + Sync +Send>) -> Self {
+        let mut sides: HittableList = Default::default();
+
+        // Triangulation code for less code repeat
+        #[inline]
+        fn triangulate( list: &mut HittableList, t_num: usize, a: (f64, f64), b: (f64, f64), k: f64, plane: Plane, mat_ptr: Arc<dyn Material + Sync +Send>) {
+            let (k_axis, first_axis, second_axis) = match plane {
+                Plane::YZ => (0usize, 1usize, 2usize),
+                Plane::XZ => (1usize, 0usize, 2usize),
+                Plane::XY => (2usize, 0usize, 1usize),
+            };
+            let mut x = Vec3::new(0.0,0.0,0.0);
+            let mut y = Vec3::new(0.0,0.0,0.0);
+            let mut z = Vec3::new(0.0,0.0,0.0);
+            match t_num {
+                1 => {
+                    x[first_axis] = a.0;
+                    x[second_axis] = b.0;
+                    x[k_axis] = k;
+                    y[first_axis] = a.1;
+                    y[second_axis] = b.0;
+                    y[k_axis] = k;
+                    z[first_axis] = a.0;
+                    z[second_axis] = b.1;
+                    z[k_axis] = k;
+                }
+                2 => {
+                    x[first_axis] = a.1;
+                    x[second_axis] = b.1;
+                    x[k_axis] = k;
+                    y[first_axis] = a.0;
+                    y[second_axis] = b.1;
+                    y[k_axis] = k;
+                    z[first_axis] = a.1;
+                    z[second_axis] = b.0;
+                    z[k_axis] = k;
+                }
+                _ => {
+                    panic!["Unexpected triangulation at Box!"]
+                }
+            }
+            list.add(Arc::new(
+                Triangle::from_points(
+                    x,y,z,
+                    Arc::clone(&mat_ptr)
+                )
+            ));
+        }
+
+        // XY Plane sides
+        // Side 1
+        triangulate(&mut sides, 1, (p0.x, p1.x), (p0.y, p1.y), p1.z, Plane::XY, Arc::clone(&mat_ptr));
+        triangulate(&mut sides, 2, (p0.x, p1.x), (p0.y, p1.y), p1.z, Plane::XY, Arc::clone(&mat_ptr));
+        // Side 2
+        triangulate(&mut sides, 1, (p0.x, p1.x), (p0.y, p1.y), p0.z, Plane::XY, Arc::clone(&mat_ptr));
+        triangulate(&mut sides, 2, (p0.x, p1.x), (p0.y, p1.y), p0.z, Plane::XY, Arc::clone(&mat_ptr));
+
+        // XZ Plane sides
+        // Side 1
+        triangulate(&mut sides, 1, (p0.x, p1.x), (p0.z, p1.z), p1.y,Plane::XZ, Arc::clone(&mat_ptr));
+        triangulate(&mut sides, 2, (p0.x, p1.x), (p0.z, p1.z), p1.y,Plane::XZ, Arc::clone(&mat_ptr));
+        // Side 2
+        triangulate(&mut sides, 1, (p0.x, p1.x), (p0.z, p1.z), p0.y,Plane::XZ, Arc::clone(&mat_ptr));
+        triangulate(&mut sides, 2, (p0.x, p1.x), (p0.z, p1.z), p0.y,Plane::XZ, Arc::clone(&mat_ptr));
+
+        // YZ Plane Sides
+        // Side 1
+        triangulate(&mut sides, 1, (p0.y, p1.y), (p0.z, p1.z), p1.x,Plane::YZ, Arc::clone(&mat_ptr));
+        triangulate(&mut sides, 2, (p0.y, p1.y), (p0.z, p1.z), p1.x,Plane::YZ, Arc::clone(&mat_ptr));
+        // Side 2
+        triangulate(&mut sides, 1, (p0.y, p1.y), (p0.z, p1.z), p0.x,Plane::YZ, Arc::clone(&mat_ptr));
+        triangulate(&mut sides, 2, (p0.y, p1.y), (p0.z, p1.z), p0.x,Plane::YZ, Arc::clone(&mat_ptr));
+
+        Self {
+            box_min: p0,
+            box_max: p1,
+            sides
+        }
+    }
     pub fn new(p0: Vec3, p1: Vec3, mat_ptr: Arc<dyn Material + Sync + Send>) -> Self {
         let mut sides: HittableList = Default::default();
 
@@ -123,6 +203,7 @@ impl Box {
             p1.z,
             Arc::clone(&mat_ptr),
         )));
+
         sides.add(Arc::new(AARect::new(
             Plane::XY,
             p0.x,
@@ -132,6 +213,7 @@ impl Box {
             p0.z,
             Arc::clone(&mat_ptr),
         )));
+
         // XZ Plane sides
         sides.add(Arc::new(AARect::new(
             Plane::XZ,
@@ -181,7 +263,6 @@ impl Box {
 impl Hittable for Box {
     fn hit(&self, r: Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
         // Just relay it to the Hittable list sides
-
         self.sides.hit(r, t_min, t_max)
     }
 

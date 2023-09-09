@@ -5,60 +5,60 @@ use std::{fs::OpenOptions, io::BufWriter, io::Write};
 use kdam::tqdm;
 use rayon::prelude::*;
 
-use crate::{vector3::*, utils::*, ray::*, hittable::*};
+use crate::{hittable::*, ray::*, utils::*, vector3::*};
 
 #[allow(dead_code)]
 pub struct Camera {
-    pub aspect_ratio: f64,          // Width Height ratio
-    pub image_width: u64,           // Rendered image width in pixel count
-    pub samples_per_pixel: u64,     // Random samples for each pixel
-    pub max_depth: u64,             // Maximum number of ray bounces
+    pub aspect_ratio: f64,      // Width Height ratio
+    pub image_width: u64,       // Rendered image width in pixel count
+    pub samples_per_pixel: u64, // Random samples for each pixel
+    pub max_depth: u64,         // Maximum number of ray bounces
 
-    pub vfov: f64,                  // Vertical view angle (field of view)
-    pub lookfrom: Vec3,             // Point camera is looking from
-    pub lookat: Vec3,               // Point camera is looking at
-    pub vup: Vec3,                  // Camera-relative up vector
+    pub vfov: f64,      // Vertical view angle (field of view)
+    pub lookfrom: Vec3, // Point camera is looking from
+    pub lookat: Vec3,   // Point camera is looking at
+    pub vup: Vec3,      // Camera-relative up vector
 
-    pub defocus_angle: f64,         // Variation angle of rays through each pixel (?)
-    pub focus_dist: f64,            // Distance from camera lookfrom point to plane of perfect focus
+    pub defocus_angle: f64, // Variation angle of rays through each pixel (?)
+    pub focus_dist: f64,    // Distance from camera lookfrom point to plane of perfect focus
 
-    image_height: u64,              // Rendered image height
-    sqrt_spp: u64,                  // Square root of number of samples per pixel
-    recip_sqrt_spp: f64,            // 1 / sqrt_spp
-    center: Vec3,                   // Camera center
-    pixel00_loc: Vec3,              // Location of pixel 0,0
-    pixel_delta_u: Vec3,            // Offset to pixel to the right
-    pixel_delta_v: Vec3,            // Offset to pixel below
-    u: Vec3,                        // Camera basis vector
-    v: Vec3,                        // Camera basis vector
-    w: Vec3,                        // Camera basis vector
-    defocus_disk_u: Vec3,           // Defocus disk horizontal radius
-    defocus_disk_v: Vec3            // Defocus disk vertical radius
+    image_height: u64,    // Rendered image height
+    sqrt_spp: u64,        // Square root of number of samples per pixel
+    recip_sqrt_spp: f64,  // 1 / sqrt_spp
+    center: Vec3,         // Camera center
+    pixel00_loc: Vec3,    // Location of pixel 0,0
+    pixel_delta_u: Vec3,  // Offset to pixel to the right
+    pixel_delta_v: Vec3,  // Offset to pixel below
+    u: Vec3,              // Camera basis vector
+    v: Vec3,              // Camera basis vector
+    w: Vec3,              // Camera basis vector
+    defocus_disk_u: Vec3, // Defocus disk horizontal radius
+    defocus_disk_v: Vec3, // Defocus disk vertical radius
 }
 
 impl Camera {
-    pub fn init(aspect_ratio: f64,
-                image_width: u64,
-                samples_per_pixel: u64,
-                max_depth: u64,
-                vfov: f64,
-                lookfrom: Vec3,
-                lookat: Vec3,
-        ) -> Self
-    {
+    pub fn init(
+        aspect_ratio: f64,
+        image_width: u64,
+        samples_per_pixel: u64,
+        max_depth: u64,
+        vfov: f64,
+        lookfrom: Vec3,
+        lookat: Vec3,
+    ) -> Self {
         // Will be mostly this
         let vup = Vec3::new(0.0, 1.0, 0.0);
         let defocus_angle = 0.0;
         // TODO: Maybe move this as an adjustable param
         let focus_dist = 10.0;
 
-        let image_height = (image_width as f64/aspect_ratio) as u64;
+        let image_height = (image_width as f64 / aspect_ratio) as u64;
 
         let center = lookfrom;
 
         // Determine the viewport dims
         let theta = degrees_to_radians(vfov);
-        let h = f64::tan(theta/2.0);
+        let h = f64::tan(theta / 2.0);
         let viewport_height = 2.0 * h * focus_dist;
         let viewport_width = (viewport_height * (image_width as f64 / image_height as f64)) as u64;
 
@@ -66,7 +66,7 @@ impl Camera {
         let recip_sqrt_spp = 1.0 / sqrt_spp as f64;
 
         // Calculate the unit basis vecs for camera coord frame
-        let w = Vec3::unit_vector(lookfrom-lookat);
+        let w = Vec3::unit_vector(lookfrom - lookat);
         let u = Vec3::unit_vector(vup.cross(w));
         let v = w.cross(u);
 
@@ -79,11 +79,11 @@ impl Camera {
         let pixel_delta_v = viewport_v / (image_height as f64);
 
         // Calculate the location of the upper left pixel
-        let viewport_upper_left = center - (w * focus_dist) - viewport_u/2.0 - viewport_v/2.0;
-        let pixel00_loc = viewport_upper_left + (pixel_delta_u+pixel_delta_v) * 0.5;
+        let viewport_upper_left = center - (w * focus_dist) - viewport_u / 2.0 - viewport_v / 2.0;
+        let pixel00_loc = viewport_upper_left + (pixel_delta_u + pixel_delta_v) * 0.5;
 
         // Calculate the camera defocus disk basis vectors
-        let defocus_radius = focus_dist * f64::tan(degrees_to_radians(defocus_angle/2.0));
+        let defocus_radius = focus_dist * f64::tan(degrees_to_radians(defocus_angle / 2.0));
         let defocus_disk_u = u * defocus_radius;
         let defocus_disk_v = v * defocus_radius;
         Self {
@@ -108,7 +108,7 @@ impl Camera {
             defocus_disk_u,
             defocus_disk_v,
             sqrt_spp,
-            recip_sqrt_spp
+            recip_sqrt_spp,
         }
     }
 
@@ -188,7 +188,6 @@ impl Camera {
         file.write_all(data.as_bytes())
             .expect("Unable to write the header!");
 
-
         let rows: Vec<Vec<Vec3>> = tqdm!(0..self.image_height, animation = "fillup")
             .map(|j| {
                 (0..self.image_width)
@@ -198,8 +197,7 @@ impl Camera {
 
                         for s_i in 0..self.sqrt_spp {
                             for s_j in 0..self.sqrt_spp {
-                                let r = self.get_ray(i as f64, j as f64,
-                                                         s_i as f64, s_j as f64);
+                                let r = self.get_ray(i as f64, j as f64, s_i as f64, s_j as f64);
                                 col += Self::ray_color(r, background, world, self.max_depth);
                             }
                         }
