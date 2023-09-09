@@ -27,7 +27,7 @@ impl Triangle {
 
 impl Hittable for Triangle {
     // U for A, V for B and W for c
-    // Where 1-U+V = W ?
+    // MT Ray-Triangle Intersection algorithm
     fn hit(&self, r: Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
         let vert0 = self.a;
         let vert1 = self.b;
@@ -42,23 +42,23 @@ impl Hittable for Triangle {
             return None; // Ray is parallel to the plane of triangle
         }
 
-        let inv_Det: f64 = 1.0 / det;
+        let inv_det: f64 = 1.0 / det;
         let tvec: Vec3 = r.orig - vert0;
-        let u: f64 = inv_Det * tvec.dot(pvec);
+        let u: f64 = inv_det * tvec.dot(pvec);
 
         if !(0.0..=1.0).contains(&u) {
             return None;
         }
 
         let qvec: Vec3 = tvec.cross(edge1);
-        let v: f64 = inv_Det * r.dir.dot(qvec);
+        let v: f64 = inv_det * r.dir.dot(qvec);
 
         if v < 0.0 || u + v > 1.0 {
             return None;
         }
 
         // Now can compute t and find the intersection
-        let t = inv_Det * edge2.dot(qvec);
+        let t = inv_det * edge2.dot(qvec);
 
         if t < t_min || t > t_max {
             return None;

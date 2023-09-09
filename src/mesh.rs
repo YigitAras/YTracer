@@ -1,6 +1,8 @@
 use std::sync::Arc;
 
-use crate::{hittable_list::*, hittable::*, ray::*, aabb::*, bvh::*, vector3::*, triangle::*, material::*};
+use crate::{
+    aabb::*, bvh::*, hittable::*, hittable_list::*, material::*, ray::*, triangle::*, vector3::*,
+};
 
 pub struct Mesh {
     pub triangles: Bvh,
@@ -11,8 +13,8 @@ pub struct Mesh {
 impl Mesh {
     pub fn new(mesh_file: &str, mesh_mat: Arc<dyn Material + Sync + Send>, scaling: Vec3) -> Self {
         let mut list = HittableList::default();
-        let (models, _) =
-            tobj::load_obj(mesh_file, &tobj::LoadOptions::default()).expect("Failed to OBJ load file");
+        let (models, _) = tobj::load_obj(mesh_file, &tobj::LoadOptions::default())
+            .expect("Failed to OBJ load file");
 
         let model = &models[0].mesh;
         let pos_ind = &model.indices;
@@ -27,7 +29,7 @@ impl Mesh {
             let b = Vec3::new(
                 model.positions[chunk_verts[1] as usize * 3] as f64 * scaling.x,
                 model.positions[chunk_verts[1] as usize * 3 + 1] as f64 * scaling.y,
-                model.positions[chunk_verts[1] as usize*  3 + 2] as f64 * scaling.z,
+                model.positions[chunk_verts[1] as usize * 3 + 2] as f64 * scaling.z,
             );
             let c = Vec3::new(
                 model.positions[chunk_verts[2] as usize * 3] as f64 * scaling.x,
@@ -45,13 +47,12 @@ impl Mesh {
 
         let list_len = list.objects.len();
         let triangles = Bvh::new(&mut list, 0, list_len, 0.0, 0.0);
-
-        Self
-        {   triangles,
+        println!("Loaded mesh: {}", mesh_file);
+        Self {
+            triangles,
             num_triangles: list_len,
-            name: mesh_file.to_string()
+            name: mesh_file.to_string(),
         }
-
     }
 }
 
@@ -65,5 +66,4 @@ impl Hittable for Mesh {
         *output_box = self.triangles.bbox;
         true
     }
-
 }

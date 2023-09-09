@@ -12,6 +12,10 @@ Some of the renders as the project progresses:
 
 ![Ray Traced Cornell Box](renders/cornell_raytraced.png)
 
+- Ray Traced Cornell Box with Meshes
+
+![Ray Traced Cornell Box with Meshes](renders/cornell_mesh_rt.png)
+
 ## Pre-Commit Cleanup
 
 ```

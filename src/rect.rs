@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
-use crate::{aabb::*, hittable::*, hittable_list::*, material::*, ray::*, vector3::*};
 use crate::triangle::Triangle;
+use crate::{aabb::*, hittable::*, hittable_list::*, material::*, ray::*, vector3::*};
 
 #[derive(Clone)]
 pub enum Plane {
@@ -111,20 +111,28 @@ pub struct Box {
 }
 
 impl Box {
-    pub fn new_triangles(p0: Vec3, p1: Vec3 , mat_ptr: Arc<dyn Material + Sync +Send>) -> Self {
+    pub fn new_triangles(p0: Vec3, p1: Vec3, mat_ptr: Arc<dyn Material + Sync + Send>) -> Self {
         let mut sides: HittableList = Default::default();
 
         // Triangulation code for less code repeat
         #[inline]
-        fn triangulate( list: &mut HittableList, t_num: usize, a: (f64, f64), b: (f64, f64), k: f64, plane: Plane, mat_ptr: Arc<dyn Material + Sync +Send>) {
+        fn triangulate(
+            list: &mut HittableList,
+            t_num: usize,
+            a: (f64, f64),
+            b: (f64, f64),
+            k: f64,
+            plane: Plane,
+            mat_ptr: Arc<dyn Material + Sync + Send>,
+        ) {
             let (k_axis, first_axis, second_axis) = match plane {
                 Plane::YZ => (0usize, 1usize, 2usize),
                 Plane::XZ => (1usize, 0usize, 2usize),
                 Plane::XY => (2usize, 0usize, 1usize),
             };
-            let mut x = Vec3::new(0.0,0.0,0.0);
-            let mut y = Vec3::new(0.0,0.0,0.0);
-            let mut z = Vec3::new(0.0,0.0,0.0);
+            let mut x = Vec3::new(0.0, 0.0, 0.0);
+            let mut y = Vec3::new(0.0, 0.0, 0.0);
+            let mut z = Vec3::new(0.0, 0.0, 0.0);
             match t_num {
                 1 => {
                     x[first_axis] = a.0;
@@ -152,42 +160,138 @@ impl Box {
                     panic!["Unexpected triangulation at Box!"]
                 }
             }
-            list.add(Arc::new(
-                Triangle::from_points(
-                    x,y,z,
-                    Arc::clone(&mat_ptr)
-                )
-            ));
+            list.add(Arc::new(Triangle::from_points(
+                x,
+                y,
+                z,
+                Arc::clone(&mat_ptr),
+            )));
         }
 
         // XY Plane sides
         // Side 1
-        triangulate(&mut sides, 1, (p0.x, p1.x), (p0.y, p1.y), p1.z, Plane::XY, Arc::clone(&mat_ptr));
-        triangulate(&mut sides, 2, (p0.x, p1.x), (p0.y, p1.y), p1.z, Plane::XY, Arc::clone(&mat_ptr));
+        triangulate(
+            &mut sides,
+            1,
+            (p0.x, p1.x),
+            (p0.y, p1.y),
+            p1.z,
+            Plane::XY,
+            Arc::clone(&mat_ptr),
+        );
+        triangulate(
+            &mut sides,
+            2,
+            (p0.x, p1.x),
+            (p0.y, p1.y),
+            p1.z,
+            Plane::XY,
+            Arc::clone(&mat_ptr),
+        );
         // Side 2
-        triangulate(&mut sides, 1, (p0.x, p1.x), (p0.y, p1.y), p0.z, Plane::XY, Arc::clone(&mat_ptr));
-        triangulate(&mut sides, 2, (p0.x, p1.x), (p0.y, p1.y), p0.z, Plane::XY, Arc::clone(&mat_ptr));
+        triangulate(
+            &mut sides,
+            1,
+            (p0.x, p1.x),
+            (p0.y, p1.y),
+            p0.z,
+            Plane::XY,
+            Arc::clone(&mat_ptr),
+        );
+        triangulate(
+            &mut sides,
+            2,
+            (p0.x, p1.x),
+            (p0.y, p1.y),
+            p0.z,
+            Plane::XY,
+            Arc::clone(&mat_ptr),
+        );
 
         // XZ Plane sides
         // Side 1
-        triangulate(&mut sides, 1, (p0.x, p1.x), (p0.z, p1.z), p1.y,Plane::XZ, Arc::clone(&mat_ptr));
-        triangulate(&mut sides, 2, (p0.x, p1.x), (p0.z, p1.z), p1.y,Plane::XZ, Arc::clone(&mat_ptr));
+        triangulate(
+            &mut sides,
+            1,
+            (p0.x, p1.x),
+            (p0.z, p1.z),
+            p1.y,
+            Plane::XZ,
+            Arc::clone(&mat_ptr),
+        );
+        triangulate(
+            &mut sides,
+            2,
+            (p0.x, p1.x),
+            (p0.z, p1.z),
+            p1.y,
+            Plane::XZ,
+            Arc::clone(&mat_ptr),
+        );
         // Side 2
-        triangulate(&mut sides, 1, (p0.x, p1.x), (p0.z, p1.z), p0.y,Plane::XZ, Arc::clone(&mat_ptr));
-        triangulate(&mut sides, 2, (p0.x, p1.x), (p0.z, p1.z), p0.y,Plane::XZ, Arc::clone(&mat_ptr));
+        triangulate(
+            &mut sides,
+            1,
+            (p0.x, p1.x),
+            (p0.z, p1.z),
+            p0.y,
+            Plane::XZ,
+            Arc::clone(&mat_ptr),
+        );
+        triangulate(
+            &mut sides,
+            2,
+            (p0.x, p1.x),
+            (p0.z, p1.z),
+            p0.y,
+            Plane::XZ,
+            Arc::clone(&mat_ptr),
+        );
 
         // YZ Plane Sides
         // Side 1
-        triangulate(&mut sides, 1, (p0.y, p1.y), (p0.z, p1.z), p1.x,Plane::YZ, Arc::clone(&mat_ptr));
-        triangulate(&mut sides, 2, (p0.y, p1.y), (p0.z, p1.z), p1.x,Plane::YZ, Arc::clone(&mat_ptr));
+        triangulate(
+            &mut sides,
+            1,
+            (p0.y, p1.y),
+            (p0.z, p1.z),
+            p1.x,
+            Plane::YZ,
+            Arc::clone(&mat_ptr),
+        );
+        triangulate(
+            &mut sides,
+            2,
+            (p0.y, p1.y),
+            (p0.z, p1.z),
+            p1.x,
+            Plane::YZ,
+            Arc::clone(&mat_ptr),
+        );
         // Side 2
-        triangulate(&mut sides, 1, (p0.y, p1.y), (p0.z, p1.z), p0.x,Plane::YZ, Arc::clone(&mat_ptr));
-        triangulate(&mut sides, 2, (p0.y, p1.y), (p0.z, p1.z), p0.x,Plane::YZ, Arc::clone(&mat_ptr));
+        triangulate(
+            &mut sides,
+            1,
+            (p0.y, p1.y),
+            (p0.z, p1.z),
+            p0.x,
+            Plane::YZ,
+            Arc::clone(&mat_ptr),
+        );
+        triangulate(
+            &mut sides,
+            2,
+            (p0.y, p1.y),
+            (p0.z, p1.z),
+            p0.x,
+            Plane::YZ,
+            Arc::clone(&mat_ptr),
+        );
 
         Self {
             box_min: p0,
             box_max: p1,
-            sides
+            sides,
         }
     }
     pub fn new(p0: Vec3, p1: Vec3, mat_ptr: Arc<dyn Material + Sync + Send>) -> Self {

@@ -11,7 +11,6 @@ enum BVHNode {
     Leaf(Arc<dyn Hittable>),
 }
 
-
 pub struct Bvh {
     pub bbox: Aabb,
     tree: BVHNode,
