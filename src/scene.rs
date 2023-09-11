@@ -11,79 +11,6 @@ pub struct Scene {
 }
 
 impl Scene {
-    pub fn random_scene() -> HittableList {
-        let mut rng = rand::thread_rng();
-        let mut world: HittableList = Default::default();
-        let checker: Arc<dyn Texture + Sync + Send> = Arc::new(CheckerTexture::from_color(
-            Vec3::new(0.2, 0.3, 0.1),
-            Vec3::new(0.9, 0.9, 0.9),
-        ));
-
-        let material_ground: Arc<dyn Material + Sync + Send> =
-            Arc::new(Lambertian::from_texture(Arc::clone(&checker)));
-
-        world.add(Arc::new(Sphere::new(
-            Vec3::new(0.0, -1000.0, 0.0),
-            1000.0,
-            Arc::clone(&material_ground),
-        )));
-        for a in -11..11 {
-            for b in -11..11 {
-                let choose_mat = rng.gen::<f64>();
-                let center = Vec3::new(
-                    a as f64 + 0.9 * rng.gen::<f64>(),
-                    0.2,
-                    b as f64 + 0.9 * rng.gen::<f64>(),
-                );
-                if (center - (Vec3::new(4.0, 0.2, 0.0))).length() > 0.9 {
-                    if choose_mat < 0.8 {
-                        // diffuse
-                        let albedo = random_vec(0.0, 1.0) * random_vec(0.0, 1.0);
-                        let sphere_mat: Arc<dyn Material + Sync + Send> =
-                            Arc::new(Lambertian::from_color(albedo));
-                        world.add(Arc::new(Sphere::new(center, 0.2, Arc::clone(&sphere_mat))));
-                    } else if choose_mat < 0.95 {
-                        // metal
-                        let albedo = random_vec(0.5, 1.0);
-                        let fuzz = rng.gen::<f64>();
-                        let sphere_mat: Arc<dyn Material + Sync + Send> =
-                            Arc::new(Metal { albedo, fuzz });
-                        world.add(Arc::new(Sphere::new(center, 0.2, Arc::clone(&sphere_mat))));
-                    } else {
-                        // glass
-                        let sphere_mat: Arc<dyn Material + Sync + Send> =
-                            Arc::new(Dielectric { ir: 1.5 });
-                        world.add(Arc::new(Sphere::new(center, 0.2, Arc::clone(&sphere_mat))));
-                    }
-                }
-            }
-        }
-        let mat1: Arc<dyn Material + Sync + Send> = Arc::new(Dielectric { ir: 1.5 });
-        let mat2: Arc<dyn Material + Sync + Send> =
-            Arc::new(Lambertian::from_color(Vec3::new(0.4, 0.2, 0.1)));
-        let mat3: Arc<dyn Material + Sync + Send> = Arc::new(Metal {
-            albedo: Vec3::new(0.7, 0.6, 0.5),
-            fuzz: 0.0,
-        });
-
-        world.add(Arc::new(Sphere::new(
-            Vec3::new(0.0, 1.0, 0.0),
-            1.0,
-            Arc::clone(&mat1),
-        )));
-        world.add(Arc::new(Sphere::new(
-            Vec3::new(-4.0, 1.0, 0.0),
-            1.0,
-            Arc::clone(&mat2),
-        )));
-        world.add(Arc::new(Sphere::new(
-            Vec3::new(4.0, 1.0, 0.0),
-            1.0,
-            Arc::clone(&mat3),
-        )));
-        world
-    }
-
     pub fn checker_world() -> HittableList {
         let mut world: HittableList = Default::default();
         let checker: Arc<dyn Texture + Sync + Send> = Arc::new(CheckerTexture::from_color(
@@ -460,7 +387,7 @@ impl Scene {
         let mut second_mesh: Arc<dyn Hittable> = Arc::new(Mesh::new(
             "static/monkey.obj",
             Arc::clone(&white),
-            Vec3::new(1.0, 1.0, 1.0),
+            Vec3::new(85.0, 85.0, 85.0),
         ));
 
         // Just read the Ajax mesh, although it is quite big...
@@ -468,7 +395,7 @@ impl Scene {
             second_mesh = Arc::new(Mesh::new(
                 "static/ajax.obj",
                 Arc::clone(&white),
-                Vec3::new(1000.0, 1000.0, 1000.0),
+                Vec3::new(100.0, 100.0, 100.0),
             ));
         }
 

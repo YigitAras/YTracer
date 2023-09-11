@@ -70,9 +70,12 @@ impl Bvh {
 
         match size {
             0 => panic!["No elements in scene!"],
-            1 => {
-                let leaf = Arc::clone(&objects_copy.objects[start]);
+            // Let each leaf have 10 triangles
+            1..=10 => {
+                let mut items: Vec<Arc<dyn Hittable>> = vec![];
+                objects_copy.objects[start..end].clone_into(&mut items);
                 let mut tmp_bbox: Aabb = Default::default();
+                let leaf: Arc<dyn Hittable> = Arc::new(HittableList::from(items));
                 if leaf.bounding_box(time0, time1, &mut tmp_bbox) {
                     Bvh {
                         tree: BVHNode::Leaf(leaf),

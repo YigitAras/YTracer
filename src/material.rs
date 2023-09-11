@@ -1,7 +1,7 @@
-use rand::Rng;
+use std::f64::consts::PI;
 use std::sync::Arc;
 
-use crate::{hittable::*, ray::*, texture::*, utils::*, vector3::*};
+use crate::{hittable::*, ray::*, texture::*, utils::*, vector3::*, onb::*};
 
 // Light reflection/refraction related utilities
 fn reflect(v: Vec3, n: Vec3) -> Vec3 {
@@ -22,12 +22,16 @@ fn reflectance(cosine: f64, ref_idx: f64) -> f64 {
 }
 
 pub trait Material {
-    //: DynClone {
-    fn scatter(&self, r_in: Ray, hit: &HitRecord) -> Option<(Ray, Vec3)>;
+    // Returns Scattered Ray, Color and PDF
+    fn scatter(&self, r_in: Ray, hit: &HitRecord) -> Option<(Ray, Vec3, f64)>;
 
     // As default objects shouldn't emit light
     fn emitted(&self, _: f64, _: f64, _: Vec3) -> Vec3 {
         Vec3::new(0.0, 0.0, 0.0)
+    }
+
+    fn scattering_pdf(&self, _r_in: Ray, _hit: &HitRecord, _scattered: Ray) -> f64 {
+        0.0
     }
 }
 
@@ -51,19 +55,27 @@ impl Lambertian {
 }
 
 impl Material for Lambertian {
-    fn scatter(&self, _r_in: Ray, hit: &HitRecord) -> Option<(Ray, Vec3)> {
-        let mut scatter_dir = hit.normal + random_in_unit_sphere();
+    fn scatter(&self, _r_in: Ray, hit: &HitRecord) -> Option<(Ray, Vec3, f64)> {
+        let uvw = Onb::build_from_w(hit.normal);
+        let scatter_dir = uvw.local(random_cosine_direction());
 
-        if scatter_dir.near_zero() {
-            scatter_dir = hit.normal;
+
+        let scattered = Ray::new(hit.p, Vec3::unit_vector(scatter_dir));
+        let albedo = self.albedo.value(hit.u, hit.v, hit.p);
+        let pdf = uvw.w().dot(scattered.dir) / PI;
+        Some((scattered, albedo, pdf))
+    }
+    fn scattering_pdf(&self, _r_in: Ray, hit: &HitRecord, scattered: Ray) -> f64 {
+        let cos_theta = hit.normal.dot(Vec3::unit_vector(scattered.dir));
+        if cos_theta < 0.0 {
+            0.0
+        } else {
+            cos_theta / PI
         }
-
-        let scattered = Ray::new(hit.p, scatter_dir);
-        let attenuation = self.albedo.value(hit.u, hit.v, hit.p);
-        Some((scattered, attenuation))
     }
 }
 
+/*
 #[derive(Clone, Copy)]
 pub struct Metal {
     pub albedo: Vec3,
@@ -126,6 +138,7 @@ impl Material for Dielectric {
         Some((scattered, attenuation))
     }
 }
+*/
 
 pub struct DiffuseLight {
     emit: Arc<dyn Texture>,
@@ -140,7 +153,7 @@ impl DiffuseLight {
 }
 
 impl Material for DiffuseLight {
-    fn scatter(&self, _: Ray, _: &HitRecord) -> Option<(Ray, Vec3)> {
+    fn scatter(&self, _: Ray, _: &HitRecord) -> Option<(Ray, Vec3, f64)> {
         // No reflection is done through the light
         None
     }
@@ -168,10 +181,14 @@ impl Isotropic {
 }
 
 impl Material for Isotropic {
-    fn scatter(&self, _r_in: Ray, hit: &HitRecord) -> Option<(Ray, Vec3)> {
+    fn scatter(&self, _r_in: Ray, hit: &HitRecord) -> Option<(Ray, Vec3, f64)> {
         let scattered = Ray::new(hit.p, random_in_unit_sphere());
         let attenuation = self.albedo.value(hit.u, hit.v, hit.p);
+        let pdf = 1.0 / (4.0*PI);
+        Some((scattered, attenuation, pdf))
+    }
 
-        Some((scattered, attenuation))
+    fn scattering_pdf(&self, _r_in: Ray, _hit: &HitRecord, _scattered: Ray) -> f64 {
+        1.0 / (4.0*PI)
     }
 }

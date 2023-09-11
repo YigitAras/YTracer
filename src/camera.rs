@@ -157,8 +157,13 @@ impl Camera {
 
         if let Some(hit) = world.hit(r, 0.001, f64::MAX) {
             let emitted = hit.mat_ptr.emitted(hit.u, hit.v, hit.p);
-            if let Some((scattered, attenuation)) = hit.mat_ptr.scatter(r, &hit) {
-                emitted + Self::ray_color(scattered, background, world, depth - 1) * attenuation
+            if let Some((scattered, albedo, pdf)) = hit.mat_ptr.scatter(r, &hit) {
+                let scattering_pdf = hit.mat_ptr.scattering_pdf(r, &hit, scattered);
+                emitted
+                    + (Self::ray_color(scattered, background, world, depth - 1)
+                        * scattering_pdf
+                        * albedo)
+                        / pdf
             } else {
                 emitted
             }

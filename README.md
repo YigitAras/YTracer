@@ -5,6 +5,7 @@ A small personal project to learn more about Rust and Ray Tracing. Will little b
 Resources that have been used:
 - **[Ray Tracing in One Weekend](https://raytracing.github.io/books/RayTracingInOneWeekend.html)**
 - **[Ray Tracing The Next Week](https://raytracing.github.io/books/RayTracingTheNextWeek.html)**
+- **[Ray Tracing The Rest of Your Life](https://raytracing.github.io/books/RayTracingTheRestOfYourLife.html)**
 - Some Rust parallelism ideas and code from **[Fralken](https://github.com/fralken/ray-tracing-the-next-week)**'s work.
 
 Some of the renders as the project progresses:

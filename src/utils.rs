@@ -46,3 +46,16 @@ pub fn random_in_unit_sphere() -> Vec3 {
         }
     }
 }
+
+#[inline]
+pub fn random_cosine_direction() -> Vec3 {
+    let mut rng = rand::thread_rng();
+    let r1 = rng.gen::<f64>();
+    let r2 = rng.gen::<f64>();
+
+    let phi = 2.0 * PI * r1;
+    let x = f64::cos(phi) * f64::sqrt(r2);
+    let y = f64::sin(phi) * f64::sqrt(r2);
+    let z = f64::sqrt(1.0 - r2);
+    Vec3::new(x, y, z)
+}

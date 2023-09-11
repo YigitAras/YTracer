@@ -17,6 +17,7 @@ mod hittable_list;
 mod instance;
 mod material;
 mod mesh;
+mod onb;
 mod perlin;
 mod ray;
 mod rect;
@@ -29,10 +30,10 @@ mod vector3;
 
 fn main() {
     // IF DEBUG:
-    rayon::ThreadPoolBuilder::new()
-      .num_threads(1)
-        .build_global()
-       .unwrap();
+    //rayon::ThreadPoolBuilder::new()
+    //  .num_threads(1)
+    //    .build_global()
+    //   .unwrap();
 
     println!("Program started...\n");
 
@@ -51,60 +52,52 @@ fn main() {
     let background;
 
     // Select World to Render
-    let scene_id: u8 = 7;
+    let scene_id: u8 = 4;
     let mut items: HittableList;
     match scene_id {
         0 => {
-            items = Scene::random_scene();
-            background = Vec3::new(0.70, 0.80, 1.00);
-            lookfrom = Vec3::new(13.0, 2.0, 3.0);
-            lookat = Vec3::new(0.0, 0.0, 0.0);
-            vfov = 20.0;
-            _aperture = 0.1;
-        }
-        1 => {
             items = Scene::checker_world();
             background = Vec3::new(0.70, 0.80, 1.00);
             lookfrom = Vec3::new(13.0, 2.0, 3.0);
             lookat = Vec3::new(0.0, 0.0, 0.0);
             vfov = 20.0;
         }
-        2 => {
+        1 => {
             items = Scene::two_perlin_spheres();
             background = Vec3::new(0.70, 0.80, 1.00);
             lookfrom = Vec3::new(13.0, 2.0, 3.0);
             lookat = Vec3::new(0.0, 0.0, 0.0);
             vfov = 20.0;
         }
-        3 => {
+        2 => {
             items = Scene::earth_scene();
             background = Vec3::new(0.70, 0.80, 1.00);
             lookfrom = Vec3::new(13.0, 2.0, 3.0);
             lookat = Vec3::new(0.0, 0.0, 0.0);
             vfov = 20.0;
         }
-        4 => {
+        3 => {
             items = Scene::simple_light();
             background = Vec3::new(0.0, 0.0, 0.0);
             lookfrom = Vec3::new(26.0, 3.0, 6.0);
             lookat = Vec3::new(0.0, 2.0, 0.0);
             vfov = 20.0;
         }
-        5 => {
+        4 => {
             items = Scene::cornell_box();
             background = Vec3::new(0.0, 0.0, 0.0);
             lookfrom = Vec3::new(278.0, 278.0, -800.0);
             lookat = Vec3::new(278.0, 278.0, 0.0);
             vfov = 40.0;
         }
-        6 => {
+        5 => {
             items = Scene::cornell_with_gas();
             background = Vec3::new(0.0, 0.0, 0.0);
             lookfrom = Vec3::new(278.0, 278.0, -800.0);
             lookat = Vec3::new(278.0, 278.0, 0.0);
             vfov = 40.0;
         }
-        7 => {
+        6 => {
             items = Scene::cornell_with_mesh(false);
             background = Vec3::new(0.0, 0.0, 0.0);
             lookfrom = Vec3::new(278.0, 278.0, -800.0);
