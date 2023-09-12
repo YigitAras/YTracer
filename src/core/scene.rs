@@ -1,11 +1,11 @@
-use rand::Rng;
 use std::sync::Arc;
 
-use crate::{
-    constant_medium::*, hittable::*, hittable_list::*, instance::*, material::*, mesh::*, rect::*,
-    sphere::*, texture::*, utils::*, vector3::*,
-};
-
+use crate::core::hittable::*;
+use crate::core::hittable_list::*;
+use crate::geometry::instance::*;
+use crate::geometry::vector3::*;
+use crate::primitives::{mesh::*, rect::*, sphere::*};
+use crate::{constant_medium::*, material::*, texture::*};
 pub struct Scene {
     // Can add env related things here
 }
@@ -367,7 +367,7 @@ impl Scene {
             Arc::clone(&white),
         )));
 
-        // Hand-waivy location math
+        // Hand-waivy location core
         let mut first_loc = (Vec3::new(0.0, 0.0, 0.0) + Vec3::new(165.0, 165.0, 165.0)) / 2.0;
         first_loc += Vec3::new(280.0, 165.0 / 2.0 - 35.0, 220.0);
 

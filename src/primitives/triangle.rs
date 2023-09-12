@@ -1,6 +1,10 @@
 use std::sync::Arc;
 
-use crate::{aabb::*, hittable::*, material::*, ray::*, vector3::*};
+use crate::accelerators::aabb::*;
+use crate::core::hittable::*;
+use crate::geometry::ray::*;
+use crate::geometry::vector3::*;
+use crate::material::*;
 
 const EPSILON: f64 = 0.0000001;
 

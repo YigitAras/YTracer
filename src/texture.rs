@@ -1,6 +1,7 @@
 use std::sync::Arc;
 
-use crate::{perlin::*, vector3::*};
+use crate::geometry::vector3::*;
+use crate::perlin::*;
 
 pub trait Texture: Sync + Send {
     fn value(&self, u: f64, v: f64, point: Vec3) -> Vec3;

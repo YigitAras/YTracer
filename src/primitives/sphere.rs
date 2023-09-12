@@ -1,10 +1,10 @@
 use std::sync::Arc;
 
-use crate::aabb::*;
-use crate::hittable::*;
+use crate::accelerators::aabb::*;
+use crate::core::hittable::*;
+use crate::geometry::ray::*;
+use crate::geometry::vector3::*;
 use crate::material::*;
-use crate::ray::*;
-use crate::vector3::*;
 
 #[derive(Clone)]
 pub struct Sphere {

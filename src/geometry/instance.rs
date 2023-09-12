@@ -1,6 +1,10 @@
 use std::sync::Arc;
 
-use crate::{aabb::*, hittable::*, ray::*, utils::*, vector3::*};
+use crate::accelerators::aabb::*;
+use crate::core::hittable::*;
+use crate::geometry::ray::*;
+use crate::geometry::vector3::*;
+use crate::utils::*;
 
 /*
  *  Instead of moving the object, just move the ray in opposite direction

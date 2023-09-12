@@ -1,8 +1,13 @@
 use std::sync::Arc;
 
-use crate::triangle::Triangle;
-use crate::{aabb::*, hittable::*, hittable_list::*, material::*, ray::*, vector3::*};
+use crate::accelerators::aabb::*;
+use crate::core::hittable::*;
+use crate::core::hittable_list::*;
+use crate::geometry::ray::*;
+use crate::geometry::vector3::*;
+use crate::material::*;
 
+use crate::primitives::triangle::*;
 #[derive(Clone)]
 pub enum Plane {
     YZ,

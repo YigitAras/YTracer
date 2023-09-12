@@ -5,7 +5,10 @@ use std::{fs::OpenOptions, io::BufWriter, io::Write};
 use kdam::tqdm;
 use rayon::prelude::*;
 
-use crate::{hittable::*, ray::*, utils::*, vector3::*};
+use crate::core::hittable::*;
+use crate::geometry::ray::*;
+use crate::geometry::vector3::*;
+use crate::utils::*;
 
 #[allow(dead_code)]
 pub struct Camera {

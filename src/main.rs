@@ -1,32 +1,27 @@
-use crate::{bvh::*, camera::*, hittable_list::*, scene::*, vector3::*};
+use crate::accelerators::bvh::*;
+use crate::core::{camera::*, hittable_list::*, scene::*};
+use crate::geometry::vector3::*;
 
 // General Todo's to implement
-// TODO: (1) A class for meshes with one material
+// TODO: (1) A struct for meshes with material
 // TODO: (2) Implement transforms as matrix objects
 // TODO: (3) Analyse and find hot points, make them faster
 // TODO: (4) Implement SIMD and Vectorized speed-ups
 // TODO: (5) Better API for object, material and texture creation. Too verbose atm...
 // TODO: (6) Different Tree implementations
+// TODO: (7) Move material.rs to a folder called Material and dissect the code
+// TODO: (8) Move texture.rs to a folder Called Texture and dissect the code
+// TODO: (9) Add an image class and implement filters for denoising
 
-mod aabb;
-mod bvh;
-mod camera;
+mod accelerators;
 mod constant_medium;
-mod hittable;
-mod hittable_list;
-mod instance;
+mod core;
+mod geometry;
 mod material;
-mod mesh;
-mod onb;
 mod perlin;
-mod ray;
-mod rect;
-mod scene;
-mod sphere;
+mod primitives;
 mod texture;
-mod triangle;
 mod utils;
-mod vector3;
 
 fn main() {
     // IF DEBUG:
@@ -52,7 +47,8 @@ fn main() {
     let background;
 
     // Select World to Render
-    let scene_id: u8 = 4;
+    // TODO: Can move this to Scene.rs
+    let scene_id: u8 = 6;
     let mut items: HittableList;
     match scene_id {
         0 => {

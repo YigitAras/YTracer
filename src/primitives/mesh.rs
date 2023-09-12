@@ -1,8 +1,13 @@
 use std::sync::Arc;
 
-use crate::{
-    aabb::*, bvh::*, hittable::*, hittable_list::*, material::*, ray::*, triangle::*, vector3::*,
-};
+use crate::accelerators::{aabb::*, bvh::*};
+use crate::core::hittable::*;
+use crate::core::hittable_list::*;
+use crate::geometry::ray::*;
+use crate::geometry::vector3::*;
+use crate::material::*;
+
+use crate::primitives::triangle::*;
 
 pub struct Mesh {
     pub triangles: Bvh,

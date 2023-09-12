@@ -1,6 +1,6 @@
-// Orthonormal Basis Struct
-use crate::{vector3::*};
 use std::ops::{Index, IndexMut};
+// Orthonormal Basis Struct
+use crate::geometry::vector3::*;
 
 #[derive(Copy, Clone)]
 pub struct Onb {
@@ -27,7 +27,7 @@ impl Onb {
     pub fn build_from_w(w: Vec3) -> Self {
         let unit_w = Vec3::unit_vector(w);
         let a = if f64::abs(unit_w.x) > 0.9 {
-            Vec3::new(0.0 ,1.0, 0.0)
+            Vec3::new(0.0, 1.0, 0.0)
         } else {
             Vec3::new(1.0, 0.0, 0.0)
         };
@@ -35,9 +35,8 @@ impl Onb {
         let u = unit_w.cross(v);
 
         Self {
-            axis: [u, v, unit_w]
+            axis: [u, v, unit_w],
         }
-
     }
 }
 

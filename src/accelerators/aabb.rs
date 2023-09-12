@@ -1,4 +1,5 @@
-use crate::{ray::*, vector3::*};
+use crate::geometry::ray::*;
+use crate::geometry::vector3::*;
 
 #[derive(Default, Copy, Clone)]
 pub struct Aabb {

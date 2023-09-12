@@ -1,7 +1,7 @@
 /*
  *   Struct and necessary methods to create Perlin noise
  */
-use crate::vector3::*;
+use crate::geometry::vector3::*;
 
 use crate::utils::random_vec;
 use rand::Rng;

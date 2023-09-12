@@ -2,9 +2,9 @@ use std::sync::Arc;
 
 use std::ops::{Index, IndexMut};
 
-use crate::aabb::*;
-use crate::hittable::*;
-use crate::ray::*;
+use crate::accelerators::aabb::*;
+use crate::core::hittable::*;
+use crate::geometry::ray::*;
 
 #[derive(Default, Clone)]
 pub struct HittableList {

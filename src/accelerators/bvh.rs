@@ -1,9 +1,9 @@
 use std::sync::Arc;
 
-use crate::aabb::*;
-use crate::hittable::*;
-use crate::hittable_list::*;
-use crate::ray::*;
+use crate::accelerators::aabb::*;
+use crate::core::hittable::*;
+use crate::core::hittable_list::*;
+use crate::geometry::ray::*;
 
 #[allow(dead_code)]
 enum BVHNode {

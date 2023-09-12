@@ -1,7 +1,7 @@
-use crate::aabb::*;
+use crate::accelerators::aabb::*;
+use crate::geometry::ray::*;
+use crate::geometry::vector3::*;
 use crate::material::*;
-use crate::ray::*;
-use crate::vector3::*;
 
 use std::sync::Arc;
 

@@ -1,7 +1,11 @@
 use std::f64::consts::PI;
 use std::sync::Arc;
 
-use crate::{hittable::*, ray::*, texture::*, utils::*, vector3::*, onb::*};
+use crate::core::hittable::*;
+use crate::geometry::onb::*;
+use crate::geometry::ray::*;
+use crate::geometry::vector3::*;
+use crate::{texture::*, utils::*};
 
 // Light reflection/refraction related utilities
 fn reflect(v: Vec3, n: Vec3) -> Vec3 {
@@ -58,7 +62,6 @@ impl Material for Lambertian {
     fn scatter(&self, _r_in: Ray, hit: &HitRecord) -> Option<(Ray, Vec3, f64)> {
         let uvw = Onb::build_from_w(hit.normal);
         let scatter_dir = uvw.local(random_cosine_direction());
-
 
         let scattered = Ray::new(hit.p, Vec3::unit_vector(scatter_dir));
         let albedo = self.albedo.value(hit.u, hit.v, hit.p);
@@ -184,11 +187,11 @@ impl Material for Isotropic {
     fn scatter(&self, _r_in: Ray, hit: &HitRecord) -> Option<(Ray, Vec3, f64)> {
         let scattered = Ray::new(hit.p, random_in_unit_sphere());
         let attenuation = self.albedo.value(hit.u, hit.v, hit.p);
-        let pdf = 1.0 / (4.0*PI);
+        let pdf = 1.0 / (4.0 * PI);
         Some((scattered, attenuation, pdf))
     }
 
     fn scattering_pdf(&self, _r_in: Ray, _hit: &HitRecord, _scattered: Ray) -> f64 {
-        1.0 / (4.0*PI)
+        1.0 / (4.0 * PI)
     }
 }

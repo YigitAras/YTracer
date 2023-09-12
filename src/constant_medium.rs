@@ -1,7 +1,11 @@
 use rand::Rng;
 use std::sync::Arc;
 
-use crate::{aabb::*, hittable::*, material::*, ray::*, texture::*, vector3::*};
+use crate::accelerators::aabb::*;
+use crate::core::hittable::*;
+use crate::geometry::ray::*;
+use crate::geometry::vector3::*;
+use crate::{material::*, texture::*};
 
 pub struct ConstantMedium {
     boundary: Arc<dyn Hittable + Sync + Send>,
