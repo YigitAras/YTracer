@@ -48,7 +48,8 @@ impl Camera {
         vfov: f64,
         lookfrom: Vec3,
         lookat: Vec3,
-    ) -> Self {
+    ) -> Self
+    {
         // Will be mostly this
         let vup = Vec3::new(0.0, 1.0, 0.0);
         let defocus_angle = 0.0;
@@ -159,8 +160,26 @@ impl Camera {
         }
 
         if let Some(hit) = world.hit(r, 0.001, f64::MAX) {
-            let emitted = hit.mat_ptr.emitted(hit.u, hit.v, hit.p);
-            if let Some((scattered, albedo, pdf)) = hit.mat_ptr.scatter(r, &hit) {
+            let emitted = hit.mat_ptr.emitted(&hit);
+            if let Some((mut scattered, albedo, mut pdf)) = hit.mat_ptr.scatter(r, &hit) {
+                // Light sampling -- hardcoded
+                let on_light = Vec3::new(random_double(213.0, 343.0), 554.0, random_double(227.0, 332.0));
+                let to_light = on_light - hit.p;
+                let dist_sq = to_light.lenght_squared();
+
+                if to_light.dot(hit.normal) < 0.0 {
+                    return emitted;
+                }
+
+                let light_area = (343.0-213.0)*(332.0-227.0);
+                let light_cos = f64::abs(to_light.y);
+
+                if light_cos < 0.000001 {
+                    return emitted;
+                }
+
+                pdf = dist_sq / (light_cos * light_area);
+                scattered = Ray::new(hit.p, to_light);
                 let scattering_pdf = hit.mat_ptr.scattering_pdf(r, &hit, scattered);
                 emitted
                     + (Self::ray_color(scattered, background, world, depth - 1)
@@ -234,4 +253,5 @@ impl Camera {
             }
         }
     }
+
 }

@@ -48,6 +48,13 @@ pub fn random_in_unit_sphere() -> Vec3 {
 }
 
 #[inline]
+pub fn random_double(min: f64, max: f64) -> f64 {
+    let mut rng = rand::thread_rng();
+    // [min, max)
+    min + (max - min) * rng.gen::<f64>()
+}
+
+#[inline]
 pub fn random_cosine_direction() -> Vec3 {
     let mut rng = rand::thread_rng();
     let r1 = rng.gen::<f64>();

@@ -30,7 +30,7 @@ pub trait Material {
     fn scatter(&self, r_in: Ray, hit: &HitRecord) -> Option<(Ray, Vec3, f64)>;
 
     // As default objects shouldn't emit light
-    fn emitted(&self, _: f64, _: f64, _: Vec3) -> Vec3 {
+    fn emitted(&self, _: &HitRecord) -> Vec3 {
         Vec3::new(0.0, 0.0, 0.0)
     }
 
@@ -160,8 +160,13 @@ impl Material for DiffuseLight {
         // No reflection is done through the light
         None
     }
-    fn emitted(&self, u: f64, v: f64, point: Vec3) -> Vec3 {
-        self.emit.value(u, v, point)
+    fn emitted(&self, hit: &HitRecord) -> Vec3 {
+        if !hit.front_face  {
+            Vec3::new(0.0,0.0,0.0)
+        } else {
+            self.emit.value(hit.u, hit.v, hit.p)
+        }
+
     }
 }
 
