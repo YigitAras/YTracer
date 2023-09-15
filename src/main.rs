@@ -48,7 +48,7 @@ fn main() {
 
     // Select World to Render
     // TODO: Can move this to Scene.rs
-    let scene_id: u8 = 6;
+    let scene_id: u8 = 7;
     let mut items: HittableList;
     match scene_id {
         0 => {
@@ -100,6 +100,13 @@ fn main() {
             lookat = Vec3::new(278.0, 278.0, 0.0);
             vfov = 40.0;
         }
+        7 => {
+            items = Scene::cornell_with_quad(false);
+            background = Vec3::new(0.0, 0.0, 0.0);
+            lookfrom = Vec3::new(278.0, 278.0, -800.0);
+            lookat = Vec3::new(278.0, 278.0, 0.0);
+            vfov = 40.0;
+        }
         _ => panic!["Unimplemented scene code!"],
     }
 
@@ -117,4 +124,5 @@ fn main() {
     );
 
     camera.render(&world, background);
+
 }

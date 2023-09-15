@@ -6,6 +6,8 @@ use crate::geometry::instance::*;
 use crate::geometry::vector3::*;
 use crate::primitives::{mesh::*, rect::*, sphere::*};
 use crate::{constant_medium::*, material::*, texture::*};
+use crate::primitives::quad::Quad;
+
 pub struct Scene {
     // Can add env related things here
 }
@@ -414,6 +416,126 @@ impl Scene {
         box2 = Arc::new(YRotate::new(box2, -18.0));
         box2 = Arc::new(Translate::new(box2, Vec3::new(320.0, 0.0, 240.0)));
         world.add(box2);
+
+        world
+    }
+
+    pub fn cornell_with_quad(big_mesh: bool) -> HittableList {
+        let mut world: HittableList = Default::default();
+        let red: Arc<dyn Material + Sync + Send> =
+            Arc::new(Lambertian::from_color(Vec3::new(0.65, 0.05, 0.05)));
+        let white: Arc<dyn Material + Sync + Send> =
+            Arc::new(Lambertian::from_color(Vec3::new(0.73, 0.73, 0.73)));
+        let green: Arc<dyn Material + Sync + Send> =
+            Arc::new(Lambertian::from_color(Vec3::new(0.12, 0.45, 0.15)));
+        let light: Arc<dyn Material + Sync + Send> =
+            Arc::new(DiffuseLight::from_color(Vec3::new(15.0, 15.0, 15.0)));
+
+
+        // Hand-waivy location code
+        let mut first_loc = (Vec3::new(0.0, 0.0, 0.0) + Vec3::new(165.0, 165.0, 165.0)) / 2.0;
+        first_loc += Vec3::new(280.0, 165.0 / 2.0 - 35.0, 220.0);
+
+        let mut second_loc = (Vec3::new(0.0, 0.0, 0.0) + Vec3::new(165.0, 165.0, 165.0)) / 2.0;
+        second_loc += Vec3::new(130.0, 0.0, 65.0);
+        second_loc += Vec3::new(-70.0, 30.0, -40.0);
+
+        let mut bunny_mesh: Arc<dyn Hittable> = Arc::new(Mesh::new(
+            "static/stanford_bunny.obj",
+            Arc::clone(&white),
+            Vec3::new(1000.0, 1000.0, 1000.0),
+        ));
+
+        bunny_mesh = Arc::new(YRotate::new(bunny_mesh, 210.0));
+        bunny_mesh = Arc::new(Translate::new(bunny_mesh, first_loc));
+
+        let mut second_mesh: Arc<dyn Hittable> = Arc::new(Mesh::new(
+            "static/monkey.obj",
+            Arc::clone(&white),
+            Vec3::new(85.0, 85.0, 85.0),
+        ));
+
+        // Just read the Ajax mesh, although it is quite big...
+        if big_mesh {
+            second_mesh = Arc::new(Mesh::new(
+                "static/ajax.obj",
+                Arc::clone(&white),
+                Vec3::new(100.0, 100.0, 100.0),
+            ));
+        }
+
+        second_mesh = Arc::new(YRotate::new(second_mesh, 150.0));
+        second_mesh = Arc::new(Translate::new(second_mesh, second_loc));
+
+        world.add(bunny_mesh);
+        world.add(second_mesh);
+
+        // Boxes and the scene now
+        world.add(Arc::new(
+            Quad::new(
+                Vec3::new(555.0,0.0,0.0),
+                Vec3::new(0.0,555.0,0.0),
+                Vec3::new(0.0, 0.0, 555.0),
+                Arc::clone(&green)
+            )
+        ));
+
+        world.add(Arc::new(
+            Quad::new(
+                Vec3::new(0.0,0.0,0.0),
+                Vec3::new(0.0,555.0,0.0),
+                Vec3::new(0.0, 0.0, 555.0),
+                Arc::clone(&red)
+            )
+        ));
+
+        world.add(Arc::new(
+            Quad::new(
+                Vec3::new(343.0, 554.0, 332.0),
+                Vec3::new(-130.0,0.0,0.0),
+                Vec3::new(0.0,0.0,-105.0),
+                Arc::clone(&light)
+            )
+        ));
+
+        world.add(Arc::new(
+            Quad::new(
+                Vec3::new(0.0, 0.0, 0.0),
+                Vec3::new(555.0,0.0,0.0),
+                Vec3::new(0.0,0.0,555.0),
+                Arc::clone(&white)
+            )
+        ));
+
+        world.add(Arc::new(
+            Quad::new(
+                Vec3::new(555.0, 555.0, 555.0),
+                Vec3::new(-555.0,0.0,0.0),
+                Vec3::new(0.0,0.0,-555.0),
+                Arc::clone(&white)
+            )
+        ));
+
+        world.add(Arc::new(
+            Quad::new(
+                Vec3::new(0.0, 0.0, 555.0),
+                Vec3::new(555.0,0.0,0.0),
+                Vec3::new(0.0,555.0,0.0),
+                Arc::clone(&white)
+            )
+        ));
+
+
+        let mut box2: Arc<dyn Hittable> = Arc::new(Box::new_triangles(
+            Vec3::new(0.0, 0.0, 0.0),
+            Vec3::new(165.0, 165.0, 165.0),
+            Arc::clone(&white),
+        ));
+
+        box2 = Arc::new(YRotate::new(box2, -18.0));
+        box2 = Arc::new(Translate::new(box2, Vec3::new(320.0, 0.0, 240.0)));
+        world.add(box2);
+
 
         world
     }

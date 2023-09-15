@@ -94,18 +94,19 @@ impl Hittable for Triangle {
         let c = self.c;
 
         let minimum = Vec3::new(
-            f64::min(a.x, f64::min(b.x, c.x)) - 0.0001,
-            f64::min(a.y, f64::min(b.y, c.y)) - 0.0001,
-            f64::min(a.z, f64::min(b.z, c.z)) - 0.0001,
+            f64::min(a.x, f64::min(b.x, c.x)) ,
+            f64::min(a.y, f64::min(b.y, c.y)) ,
+            f64::min(a.z, f64::min(b.z, c.z)) ,
         );
 
         let maximum = Vec3::new(
-            f64::max(a.x, f64::max(b.x, c.x)) + 0.0001,
-            f64::max(a.y, f64::max(b.y, c.y)) + 0.0001,
-            f64::max(a.z, f64::max(b.z, c.z)) + 0.0001,
+            f64::max(a.x, f64::max(b.x, c.x)) ,
+            f64::max(a.y, f64::max(b.y, c.y)) ,
+            f64::max(a.z, f64::max(b.z, c.z)) ,
         );
 
-        *output_box = Aabb { minimum, maximum };
+        // Add padding just in case...
+        *output_box = Aabb { minimum, maximum }.pad();
         true
     }
 }

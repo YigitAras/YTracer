@@ -49,6 +49,7 @@ impl Sphere {
 }
 
 impl Hittable for Sphere {
+    #[inline]
     fn hit(&self, r: Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
         let oc = r.orig - self.center;
         let a = r.dir.lenght_squared();

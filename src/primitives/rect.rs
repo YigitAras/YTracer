@@ -8,6 +8,8 @@ use crate::geometry::vector3::*;
 use crate::material::*;
 
 use crate::primitives::triangle::*;
+use crate::primitives::quad::*;
+
 #[derive(Clone)]
 pub enum Plane {
     YZ,
@@ -361,6 +363,45 @@ impl Box {
             p0.x,
             Arc::clone(&mat_ptr),
         )));
+
+        Self {
+            box_min: p0,
+            box_max: p1,
+            sides,
+        }
+    }
+    pub fn from_quads(p0: Vec3, p1: Vec3, mat_ptr: Arc<dyn Material + Sync + Send>) -> Self {
+        let mut sides: HittableList = Default::default();
+        // Construct the two opposite vertices with the minimum and maximum coordinates.
+        let min = Vec3::new(f64::min(p0.x, p1.x),
+                                  f64::min(p0.y, p1.y),
+                                  f64::min(p0.z, p1.z));
+        let max = Vec3::new(f64::max(p0.x, p1.x),
+                                  f64::max(p0.y, p1.y),
+                                  f64::max(p0.z, p1.z));
+
+        let dx = Vec3::new(max.x- min.x, 0.0, 0.0);
+        let dy = Vec3::new(0.0, max.y - min.y, 0.0);
+        let dz = Vec3::new(0.0, 0.0, max.z - min.z);
+
+        sides.add(Arc::new(Quad::new(
+            Vec3::new(min.x, min.y, max.z),  dx,  dy, Arc::clone(&mat_ptr)
+        ))); // front
+        sides.add(Arc::new(Quad::new(
+            Vec3::new(max.x, min.y, max.z), -dz,  dy, Arc::clone(&mat_ptr)
+        ))); // right
+        sides.add(Arc::new(Quad::new(
+            Vec3::new(max.x, min.y, min.z), -dx,  dy, Arc::clone(&mat_ptr)
+        ))); // back
+        sides.add(Arc::new(Quad::new(
+            Vec3::new(min.x, min.y, max.z),  dz,  dy, Arc::clone(&mat_ptr)
+        ))); // left
+        sides.add(Arc::new(Quad::new(
+            Vec3::new(min.x, min.y, max.z),  dx, -dz, Arc::clone(&mat_ptr)
+        ))); // top
+        sides.add(Arc::new(Quad::new(
+            Vec3::new(min.x, min.y, max.z),  dx,  dz, Arc::clone(&mat_ptr)
+        ))); // bottom
 
         Self {
             box_min: p0,
