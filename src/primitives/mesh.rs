@@ -62,11 +62,13 @@ impl Mesh {
 }
 
 impl Hittable for Mesh {
+    #[inline]
     fn hit(&self, r: Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
         //println!("Hit one mesh: {}", self.name);
         self.triangles.hit(r, t_min, t_max)
     }
 
+    #[inline]
     fn bounding_box(&self, _: f64, _: f64, output_box: &mut Aabb) -> bool {
         *output_box = self.triangles.bbox;
         true

@@ -35,6 +35,7 @@ impl HitRecord {
         }
     }
 
+    #[inline]
     pub fn set_face_normal(&mut self, r: Ray, outward_normal: Vec3) {
         // NOTE: the parameter `outward_normal` is assumed to have unit length.
         self.front_face = r.dir.dot(outward_normal) < 0.0;
